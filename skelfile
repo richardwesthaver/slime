@@ -7,3 +7,16 @@
 :vc (:hg "https://vc.compiler.company/ext/slime"
      (upstream (:git "https://github.com/slime/slime"))
      (gh (:git "ssh://git@github.com/richardwesthaver/slime")))
+:rules
+((default (compile-swank compile-slime))
+ (slime () 
+  (:compile ()
+   (run-emacs `("slime.el" "slime-autoloads.el" "slime-tests.el" ,@(mapcar 'namestring (directory "lib/*.el")))
+    :batch t
+    :function 'batch-byte-compile)))
+ (swank ()
+  (:compile () 
+   (with-sbcl (:noinform t :quit t)
+    (load "swank-loader.lisp") (uiop:symbol-call :swank-loader "INIT" :setup nil))))
+ (clean ()
+  #$rm -rf ./**.fasl ./**.elc$#))
