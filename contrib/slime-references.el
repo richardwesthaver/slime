@@ -30,9 +30,7 @@
   "Face for references."
   :group 'slime-debugger)
 
-
 ;;;;; SBCL-style references
-
 (defvar slime-references-local-keymap
   (let ((map (make-sparse-keymap "local keymap for slime references")))
     (define-key map [mouse-2] 'slime-lookup-reference-at-mouse)
@@ -118,9 +116,8 @@ See SWANK-BACKEND:CONDITION-REFERENCES for the datatype."
     (save-excursion
       (goto-char pos)
       (slime-lookup-reference-at-point))))
-
-;;;;; Hook into *SLIME COMPILATION*
 
+;;;;; Hook into *SLIME COMPILATION*
 (defun slime-note.references (note)
   (plist-get note :references))
 

@@ -27,8 +27,6 @@
   :type '(choice string (const :tag "None" nil))
   :group 'slime-ui)
 
-
-
 (defun slime-arglist (name)
   "Show the argument list for NAME."
   (interactive (list (slime-read-symbol-name "Arglist of: " t)))
@@ -65,9 +63,7 @@
 
 (eldoc-add-command 'slime-autodoc-space)
 
-
 ;;;; Autodoc cache
-
 (defvar slime-autodoc--cache-last-context nil)
 (defvar slime-autodoc--cache-last-autodoc nil)
 
@@ -81,9 +77,7 @@
   (setq slime-autodoc--cache-last-context context)
   (setq slime-autodoc--cache-last-autodoc autodoc))
 
-
 ;;;; Formatting autodoc
-
 (defsubst slime-autodoc--canonicalize-whitespace (string)
   (replace-regexp-in-string "[ \n\t]+" " "  string))
 
@@ -116,9 +110,7 @@
   'slime-autodoc--fontify
   "SLIME 2.10")
 
-
 ;;;; Autodocs (automatic context-sensitive help)
-
 (defun slime-autodoc (&optional force-multiline)
   "Returns the cached arglist information as string, or nil.
 If it's not in the cache, the cache will be updated asynchronously."
@@ -165,9 +157,7 @@ If it's not in the cache, the cache will be updated asynchronously."
       (when (eldoc-display-message-p)
 	(eldoc-message (slime-autodoc--format doc multilinep))))))
 
-
 ;;; Minor mode definition
-
 ;; Compute the prefix for slime-doc-map, usually this is C-c C-d.
 (defun slime-autodoc--doc-map-prefix ()
   (concat
@@ -191,9 +181,7 @@ If it's not in the cache, the cache will be updated asynchronously."
     (message "Slime autodoc mode %s."
              (if slime-autodoc-mode "enabled" "disabled"))))
 
-
 ;;; Noise to enable/disable slime-autodoc-mode
-
 (defun slime-autodoc--on  () (slime-autodoc-mode 1))
 (defun slime-autodoc--off () (slime-autodoc-mode 0))
 

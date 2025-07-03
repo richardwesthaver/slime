@@ -33,9 +33,7 @@ program.")
 (defparameter *traces-per-report* 150
   "Number of traces to report to emacs in each batch.")
 
-
 ;;;; `trace-entry' model
-;;;;
 (defvar *traces* (make-array 1000 :fill-pointer 0
                                   :adjustable t))
 
@@ -101,9 +99,7 @@ program.")
   (setf (gethash (swank/backend:current-thread) *current-trace-by-thread*)
         trace))
 
-
 ;;;; Control of traced specs
-;;;
 (defvar *traced-specs* '())
 
 (defslimefun dialog-trace (spec)
@@ -159,9 +155,7 @@ program.")
                    (dialog-untrace spec)
                    "untraced for the trace dialog as well")))))
 
-
 ;;;; A special kind of trace call
-;;;
 (defun trace-format (format-spec &rest format-args)
   "Make a string from FORMAT-SPEC and FORMAT-ARGS and as a trace."
   (let* ((line (apply #'format nil format-spec format-args)))
@@ -170,9 +164,7 @@ program.")
                                 :parent (current-trace)
                                 :retlist nil)))
 
-
 ;;;; Reporting to emacs
-;;;
 (defparameter *visitor-idx* 0)
 
 (defparameter *visitor-key* nil)

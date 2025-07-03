@@ -23,29 +23,28 @@
 ;;; Some code which is useful in working around this problem is included,
 ;;; as well as a sample text-indenting outliner and an interface to Bates'
 ;;; PSGraph Postscript Graphing facility.) 
-;;;
+
 ;;; Written by Mark Kantrowitz, July 1990.
-;;;
+
 ;;; Address: School of Computer Science
 ;;;          Carnegie Mellon University
 ;;;          Pittsburgh, PA 15213
-;;;
+
 ;;; Copyright (c) 1990. All rights reserved.
-;;;
+
 ;;; See general license below.
-;;;
-
+
 ;;; ****************************************************************
 ;;; General License Agreement and Lack of Warranty *****************
 ;;; ****************************************************************
-;;;
+
 ;;; This software is distributed in the hope that it will be useful (both
 ;;; in and of itself and as an example of lisp programming), but WITHOUT
 ;;; ANY WARRANTY. The author(s) do not accept responsibility to anyone for
 ;;; the consequences of using it or for whether it serves any particular
 ;;; purpose or works at all. No warranty is made about the software or its
 ;;; performance. 
-;;; 
+
 ;;; Use and copying of this software and the preparation of derivative
 ;;; works based on this software are permitted, so long as the following
 ;;; conditions are met:
@@ -69,10 +68,10 @@
 ;;;	o  Permission is granted to manufacturers and distributors of
 ;;;	   lisp compilers and interpreters to include this software
 ;;;	   with their distribution. 
-;;;
+
 ;;; This software is made available AS IS, and is distributed without 
 ;;; warranty of any kind, either expressed or implied.
-;;; 
+
 ;;; In no event will the author(s) or their institutions be liable to you
 ;;; for damages, including lost profits, lost monies, or other special,
 ;;; incidental or consequential damages arising out of or in connection
@@ -82,26 +81,25 @@
 ;;; program, even if you have been advised of the possibility of such
 ;;; damanges, or for any claim by any other party, whether in an action of
 ;;; contract, negligence, or other tortious action.
-;;; 
+
 ;;; The current version of this software and a variety of related utilities
 ;;; may be obtained by anonymous ftp from ftp.cs.cmu.edu in the directory
 ;;;    user/ai/lang/lisp/code/tools/xref/
-;;; 
+
 ;;; Please send bug reports, comments, questions and suggestions to
 ;;; mkant@cs.cmu.edu. We would also appreciate receiving any changes
 ;;; or improvements you may make. 
-;;; 
+
 ;;; If you wish to be added to the Lisp-Utilities@cs.cmu.edu mailing list, 
 ;;; send email to Lisp-Utilities-Request@cs.cmu.edu with your name, email
 ;;; address, and affiliation. This mailing list is primarily for
 ;;; notification about major updates, bug fixes, and additions to the lisp
 ;;; utilities collection. The mailing list is intended to have low traffic.
-;;;
-
+
 ;;; ********************************
 ;;; Change Log *********************
 ;;; ********************************
-;;;
+
 ;;; 27-FEB-91 mk   Added insert arg to psgraph-xref to allow the postscript
 ;;;                graphs to be inserted in Scribe documents.
 ;;; 21-FEB-91 mk   Added warning if not compiled.
@@ -142,16 +140,16 @@
 ;;; 20-SEP-93 mk    Added fix from Peter Norvig to allow Xref to xref itself.
 ;;;                 The arg to macro-function must be a symbol.
 ;;;  7-APR-12 heller  Break lines at 80 columns.
-
+
 ;;; ********************************
 ;;; To Do **************************
 ;;; ********************************
-;;;
+
 ;;; Verify that:
 ;;;    o  null forms don't cause it to infinite loop.
 ;;;    o  nil matches against null argument lists.
 ;;;    o  declarations and doc are being ignored.
-;;;
+
 ;;; Would be nice if in addition to showing callers of a function, it
 ;;; displayed the context of the calls to the function (e.g., the
 ;;; immediately surrounding form). This entails storing entries of
@@ -160,62 +158,62 @@
 ;;; that it would cons a fair bit. If we do this, we should store
 ;;; additional information as well in the database, such as the caller
 ;;; pattern type (e.g., variable vs. function).
-;;;
+
 ;;; Write a translator from BNF (at least as much of BNF as is used
 ;;; in CLtL2), to the format used here.
-;;;
+
 ;;; Should automatically add new patterns for new functions and macros
 ;;; based on their arglists. Probably requires much more than this
 ;;; simple code walker, so there isn't much we can do.
-;;;
+
 ;;; Defmacro is a problem, because it often hides internal function
 ;;; calls within backquote and quote, which we normally ignore. If
 ;;; we redefine QUOTE's pattern so that it treats the arg like a FORM,
 ;;; we'll probably get them (though maybe the syntax will be mangled),
 ;;; but most likely a lot of spurious things as well. 
-;;;
+
 ;;; Define an operation for Defsystem which will run XREF-FILE on the
 ;;; files of the system. Or yet simpler, when XREF sees a LOAD form
 ;;; for which the argument is a string, tries to recursively call
 ;;; XREF-FILE on the specified file. Then one could just XREF-FILE
 ;;; the file which loads the system. (This should be a program
 ;;; parameter.)
-;;;
+
 ;;; Have special keywords which the user may place in a file to have
 ;;; XREF-FILE ignore a region.
-;;;
+
 ;;; Should we distinguish flet and labels from defun? I.e., note that
 ;;; flet's definitions are locally defined, instead of just lumping
 ;;; them in with regular definitions.
-;;;
+
 ;;; Add patterns for series, loop macro.
-;;;
+
 ;;; Need to integrate the variable reference database with the other
 ;;; databases, yet maintain separation. So we can distinguish all
 ;;; the different types of variable and function references, without
 ;;; multiplying databases.
-;;;
+
 ;;; Would pay to comment record-callers and record-callers* in more
 ;;; depth.
-;;; 
+
 ;;; (&OPTIONAL &REST &KEY &AUX &BODY &WHOLE &ALLOW-OTHER-KEYS &ENVIRONMENT)
-
+
 ;;; ********************************
 ;;; Notes **************************
 ;;; ********************************
-;;;
+
 ;;;    XREF has been tested (successfully) in the following lisps:
 ;;;       CMU Common Lisp (M2.9 15-Aug-90, Compiler M1.8 15-Aug-90)
 ;;;       Macintosh Allegro Common Lisp (1.3.2)
 ;;;       ExCL (Franz Allegro CL 3.1.12 [DEC 3100] 3/30/90)
 ;;;       Lucid CL (Version 2.1 6-DEC-87)
-;;;    
+
 ;;;    XREF has been tested (unsuccessfully) in the following lisps:
 ;;;       Ibuki Common Lisp (01/01, October 15, 1987)
 ;;;           - if interpreted, runs into stack overflow
 ;;;           - does not compile (tried ibcl on Suns, PMAXes and RTs)
 ;;;             seems to be due to a limitation in the c compiler.
-;;;    
+
 ;;;    XREF needs to be tested in the following lisps:
 ;;;       Symbolics Common Lisp (8.0)
 ;;;       Lucid Common Lisp (3.0, 4.0)
@@ -227,24 +225,23 @@
 ;;;       HP Common Lisp (same as Lucid?)
 ;;;       Procyon Common Lisp
 
-
 ;;; ****************************************************************
 ;;; Documentation **************************************************
 ;;; ****************************************************************
-;;;
+
 ;;; XREF analyzes a user's program, determining which functions call a
 ;;; given function, and the location of where variables are bound/assigned
 ;;; and used. The user may retrieve this information for either a single
 ;;; symbol, or display the call graph of portions of the program
 ;;; (including the entire program). This allows the programmer to debug
 ;;; and document the program's structure.
-;;; 
+
 ;;; XREF is primarily intended for analyzing large programs, where it is
 ;;; difficult, if not impossible, for the programmer to grasp the structure
 ;;; of the whole program. Nothing precludes using XREF for smaller programs,
 ;;; where it can be useful for inspecting the relationships between pieces
 ;;; of the program and for documenting the program.
-;;; 
+
 ;;; Two aspects of the Lisp programming language greatly simplify the
 ;;; analysis of Lisp programs:
 ;;; 	o  Lisp programs are naturally represented as data.
@@ -261,12 +258,12 @@
 ;;; tree. For example, one kind of relation is that the function defined
 ;;; by the definition calls the functions in its body. The relations are
 ;;; stored in a database for later examination by the user.
-;;; 
+
 ;;; While XREF currently only works for programs written in Lisp, it could
 ;;; be extended to other programming languages by writing a function to
 ;;; generate parse trees for definitions in that language, and a core
 ;;; set of patterns for the language's syntax.
-;;; 
+
 ;;; Since XREF normally does a static syntactic analysis of the program, 
 ;;; it does not detect references due to the expansion of a macro definition. 
 ;;; To do this in full generality XREF would have to have knowledge about the
@@ -278,7 +275,7 @@
 ;;; used by macros be loaded and in working order. On the other hand, then
 ;;; we would need no special knowledge about macros (excluding the 24 special
 ;;; forms of Lisp).
-;;;
+
 ;;; Parameters may be set to enable macro expansion in XREF. Then XREF
 ;;; will expand any macros for which it does not have predefined patterns.
 ;;; (For example, most Lisps will implement dolist as a macro. Since XREF
@@ -286,7 +283,7 @@
 ;;; a form whose car is dolist.) For this to work properly, the code must
 ;;; be loaded before being processed by XREF, and XREF's parameters should
 ;;; be set so that it processes forms in their proper packages. 
-;;;
+
 ;;; If macro expansion is disabled, the default rules for handling macro
 ;;; references may not be sufficient for some user-defined macros, because
 ;;; macros allow a variety of non-standard syntactic extensions to the
@@ -294,7 +291,6 @@
 ;;; a manner similar to that in which the core Lisp grammar was specified.
 ;;;
 
-
 ;;; ********************************
 ;;; User Guide *********************
 ;;; ********************************
@@ -304,7 +300,7 @@
 ;;; XREF-FILES (&rest files)                                      [FUNCTION]
 ;;;    Grovels over the lisp code located in source file FILES, using
 ;;;    xref-file.
-;;;
+
 ;;; XREF-FILE (filename &optional clear-tables verbose)       [Function]
 ;;;    Cross references the function and variable calls in FILENAME by
 ;;;    walking over the source code located in the file. Defaults type of
@@ -314,57 +310,57 @@
 ;;;    nil to append to the database. If VERBOSE is T (the default), prints
 ;;;    out the name of the file, one progress dot for each form processed,
 ;;;    and the total number of forms.
-;;;
+
 ;;; -----
 ;;; The following functions display information about the uses of the 
 ;;; specified symbol as a function, variable, or constant.
-;;;
+
 ;;; LIST-CALLERS (symbol)                                         [FUNCTION]
 ;;;    Lists all functions which call SYMBOL as a function (function
 ;;;    invocation).
-;;;
+
 ;;; LIST-READERS (symbol)                                         [FUNCTION]
 ;;;    Lists all functions which refer to SYMBOL as a variable
 ;;;    (variable reference).
-;;;
+
 ;;; LIST-SETTERS (symbol)                                         [FUNCTION]
 ;;;    Lists all functions which bind/set SYMBOL as a variable
 ;;;    (variable mutation).
-;;;
+
 ;;; LIST-USERS (symbol)                                           [FUNCTION]
 ;;;    Lists all functions which use SYMBOL as a variable or function.
-;;;
+
 ;;; WHO-CALLS (symbol &optional how)                              [FUNCTION]
 ;;;    Lists callers of symbol. HOW may be :function, :reader, :setter,
 ;;;    or :variable."
-;;;
+
 ;;; WHAT-FILES-CALL (symbol)                                      [FUNCTION]
 ;;;    Lists names of files that contain uses of SYMBOL
 ;;;    as a function, variable, or constant.
-;;;
+
 ;;; SOURCE-FILE (symbol)                                          [FUNCTION]
 ;;;    Lists the names of files in which SYMBOL is defined/used.
-;;;
+
 ;;; LIST-CALLEES (symbol)                                         [FUNCTION]
 ;;;    Lists names of functions and variables called by SYMBOL.
-;;;
+
 ;;; -----
 ;;; The following functions may be useful for viewing the database and
 ;;; debugging the calling patterns.
-;;;
+
 ;;; *LAST-FORM* ()                                                [VARIABLE]
 ;;;    The last form read from the file. Useful for figuring out what went
 ;;;    wrong when xref-file drops into the debugger.
-;;;
+
 ;;; *XREF-VERBOSE* t                                              [VARIABLE]
 ;;;    When T, xref-file(s) prints out the names of the files it looks at,
 ;;;    progress dots, and the number of forms read.
-;;;
+
 ;;; *TYPES-TO-IGNORE* (quote (:lisp :lisp2))                      [VARIABLE]
 ;;;    Default set of caller types (as specified in the patterns) to ignore
 ;;;    in the database handling functions. :lisp is CLtL 1st edition,
 ;;;    :lisp2 is additional patterns from CLtL 2nd edition.
-;;;
+
 ;;; *HANDLE-PACKAGE-FORMS* ()                                     [VARIABLE]
 ;;;    When non-NIL, and XREF-FILE sees a package-setting form like
 ;;;    IN-PACKAGE, sets the current package to the specified package by
@@ -373,34 +369,34 @@
 ;;;    when this variable is non-NIL one may specify that all symbols from a
 ;;;    particular set of packages be ignored. This is only useful if the
 ;;;    files use different packages with conflicting names.
-;;;
+
 ;;; *HANDLE-FUNCTION-FORMS* t                                     [VARIABLE]
 ;;;    When T, XREF-FILE tries to be smart about forms which occur in
 ;;;    a function position, such as lambdas and arbitrary Lisp forms.
 ;;;    If so, it recursively calls record-callers with pattern 'FORM.
 ;;;    If the form is a lambda, makes the caller a caller of
 ;;;    :unnamed-lambda.
-;;;
+
 ;;; *HANDLE-MACRO-FORMS* t                                        [VARIABLE]
 ;;;    When T, if the file was loaded before being processed by XREF, and
 ;;;    the car of a form is a macro, it notes that the parent calls the
 ;;;    macro, and then calls macroexpand-1 on the form.
-;;;
+
 ;;; *DEFAULT-GRAPHING-MODE* :call-graph                           [VARIABLE]
 ;;;    Specifies whether we graph up or down. If :call-graph, the children
 ;;;    of a node are the functions it calls. If :caller-graph, the
 ;;;    children of a node are the functions that call it.
-;;;
+
 ;;; *INDENT-AMOUNT* 3                                             [VARIABLE]
 ;;;    Number of spaces to indent successive levels in PRINT-INDENTED-TREE.
-;;;
+
 ;;; DISPLAY-DATABASE (&optional database types-to-ignore)         [FUNCTION]
 ;;;    Prints out the name of each symbol and all its callers. Specify
 ;;;    database :callers (the default) to get function call references,
 ;;;    :file to the get files in which the symbol is called, :readers to get
 ;;;    variable references, and :setters to get variable binding and
 ;;;    assignments. Ignores functions of types listed in types-to-ignore.
-;;;
+
 ;;; PRINT-CALLER-TREES (&key (mode *default-graphing-mode*)       [FUNCTION]
 ;;;                     (types-to-ignore *types-to-ignore*)
 ;;;                     compact root-nodes)
@@ -416,7 +412,7 @@
 ;;;    printing trees if they have already been seen. ROOT-NODES is a list
 ;;;    of root nodes of trees to display. If ROOT-NODES is nil, tries to
 ;;;    find all root nodes in the database.
-;;;
+
 ;;; MAKE-CALLER-TREE (&optional (mode *default-graphing-mode*)    [FUNCTION]
 ;;;                   (types-to-ignore *types-to-ignore*)
 ;;;                   compact)
@@ -430,35 +426,35 @@
 ;;;    duplicate the node's tree (except for cycles). This is usefull
 ;;;    because the call tree is actually a directed graph, so we can either
 ;;;    duplicate references or display only the first one.
-;;;
+
 ;;; DETERMINE-FILE-DEPENDENCIES (&optional database)          [FUNCTION]
 ;;;    Makes a hash table of file dependencies for the references listed in
 ;;;    DATABASE. This function may be useful for automatically resolving
 ;;;    file references for automatic creation of a system definition
 ;;;    (defsystem).
-;;;
+
 ;;; PRINT-FILE-DEPENDENCIES (&optional database)              [FUNCTION]
 ;;;    Prints a list of file dependencies for the references listed in
 ;;;    DATABASE. This function may be useful for automatically computing
 ;;;    file loading constraints for a system definition tool.
-;;;
+
 ;;; WRITE-CALLERS-DATABASE-TO-FILE (filename)                     [FUNCTION]
 ;;;    Saves the contents of the current callers database to a file. This
 ;;;    file can be loaded to restore the previous contents of the
 ;;;    database. (For large systems it can take a long time to crunch
 ;;;    through the code, so this can save some time.)
-;;;
+
 ;;; -----
 ;;; The following macros define new function and macro call patterns.
 ;;; They may be used to extend the static analysis tool to handle
 ;;; new def forms, extensions to Common Lisp, and program defs.
-;;;
+
 ;;; DEFINE-PATTERN-SUBSTITUTION (name pattern)                    [MACRO]
 ;;;    Defines NAME to be equivalent to the specified pattern. Useful for
 ;;;    making patterns more readable. For example, the LAMBDA-LIST is
 ;;;    defined as a pattern substitution, making the definition of the
 ;;;    DEFUN caller-pattern simpler.
-;;;
+
 ;;; DEFINE-CALLER-PATTERN (name pattern &optional caller-type)    [MACRO]
 ;;;    Defines NAME as a function/macro call with argument structure
 ;;;    described by PATTERN. CALLER-TYPE, if specified, assigns a type to
@@ -466,22 +462,22 @@
 ;;;    viewing the database. For example, all the Common Lisp definitions
 ;;;    have a caller-type of :lisp or :lisp2, so that you can exclude
 ;;;    references to common lisp functions from the calling tree.
-;;;
+
 ;;; DEFINE-VARIABLE-PATTERN (name &optional caller-type)          [MACRO]
 ;;;    Defines NAME as a variable reference of type CALLER-TYPE. This is
 ;;;    mainly used to establish the caller-type of the variable.
-;;;
+
 ;;; DEFINE-CALLER-PATTERN-SYNONYMS (source destinations)          [MACRO]
 ;;;    For defining function caller pattern syntax synonyms. For each name
 ;;;    in DESTINATIONS, defines its pattern as a copy of the definition
 ;;;    of SOURCE. Allows a large number of identical patterns to be defined
 ;;;    simultaneously. Must occur after the SOURCE has been defined.
-;;;
+
 ;;; -----
 ;;; This system includes pattern definitions for the latest
 ;;; common lisp specification, as published in Guy Steele,
 ;;; Common Lisp: The Language, 2nd Edition.
-;;;
+
 ;;; Patterns may be either structures to match, or a predicate
 ;;; like symbolp/numberp/stringp. The pattern specification language
 ;;; is similar to the notation used in CLtL2, but in a more lisp-like 
@@ -521,11 +517,11 @@
 ;;;                         in the definition of let, let*, etc.
 ;;;    VARIABLE             The corresponding form element should be
 ;;;                         a variable reference. 
-;;;
+
 ;;; In all other pattern symbols, it looks up the symbols pattern substitution
 ;;; and recursively matches against the pattern. Automatically destructures
 ;;; list structure that does not include consing dots.
-;;;
+
 ;;; Among the pattern substitution names defined are:
 ;;;    STRING, SYMBOL, NUMBER    Appropriate :test patterns.
 ;;;    LAMBDA-LIST               Matches against a lambda list.
@@ -534,7 +530,7 @@
 ;;;                              and lambdas. This is used in the definition
 ;;;                              of apply, funcall, and the mapping patterns.
 ;;;    and others...
-;;;
+
 ;;; Here's some sample pattern definitions:
 ;;; (define-caller-pattern defun 
 ;;;   (name lambda-list
@@ -542,44 +538,43 @@
 ;;;	(:star form))
 ;;;  :lisp)
 ;;; (define-caller-pattern funcall (fn (:star form)) :lisp)
-;;;
+
 ;;; In general, the system is intelligent enough to handle any sort of
 ;;; simple funcall. One only need specify the syntax for functions and
 ;;; macros which use optional arguments, keyword arguments, or some
 ;;; argument positions are special, such as in apply and funcall, or
 ;;; to indicate that the function is of the specified caller type.
-;;;
-;;;
+
 ;;; NOTES:
-;;;
+
 ;;;    XRef assumes syntactically correct lisp code.
-;;;
+
 ;;;    This is by no means perfect. For example, let and let* are treated
 ;;;    identically, instead of differentiating between serial and parallel
 ;;;    binding. But it's still a useful tool. It can be helpful in 
 ;;;    maintaining code, debugging problems with patch files, determining
 ;;;    whether functions are multiply defined, and help you remember where
 ;;;    a function is defined or called.
-;;;
+
 ;;;    XREF runs best when compiled.
-
+
 ;;; ********************************
 ;;; References *********************
 ;;; ********************************
-;;;
+
 ;;; Xerox Interlisp Masterscope Program:
 ;;;   Larry M Masinter, Global program analysis in an interactive environment
 ;;;   PhD Thesis, Stanford University, 1980. 
-;;;
+
 ;;; Symbolics Who-Calls Database:
 ;;;   User's Guide to Symbolics Computers, Volume 1, Cambridge, MA, July 1986
 ;;;   Genera 7.0, pp 183-185.
 ;;;   
-
+
 ;;; ********************************
 ;;; Example ************************
 ;;; ********************************
-;;; 
+
 ;;; Here is an example of running XREF on a short program.
 ;;; [In Scribe documentation, give a simple short program and resulting
 ;;;  XREF output, including postscript call graphs.]
@@ -654,11 +649,10 @@ Rooted calling trees:
               NODE-WIDTH
               NODE-HEIGHT
 |#
-
+
 ;;; ****************************************************************
 ;;; List Callers ***************************************************
 ;;; ****************************************************************
-
 (defpackage :pxref
   (:use :common-lisp)
   (:export #:list-callers 
@@ -1230,7 +1224,6 @@ Rooted calling trees:
 			    (car in-optionals))
 			(values t parent environment)))))))))
 
-
 ;;; ********************************
 ;;; Misc Utilities *****************
 ;;; ********************************
@@ -1299,7 +1292,6 @@ Rooted calling trees:
 			 x y))
 	     *setters-database*)))
 
-
 ;;; ********************************
 ;;; Print Caller Trees *************
 ;;; ********************************
@@ -1485,7 +1477,6 @@ Rooted calling trees:
       (format t "~&Cyclic calling trees:")
       (print-indented-tree cycles 2))))
 
-
 ;;; ********************************
 ;;; Interface to PSGraph ***********
 ;;; ********************************
@@ -1572,7 +1563,6 @@ Rooted calling trees:
 
 |#
 
-
 ;;; ****************************************************************
 ;;; Cross Referencing Patterns for Common Lisp *********************
 ;;; ****************************************************************

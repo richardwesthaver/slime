@@ -39,7 +39,6 @@ comint-filename-completion to complete file names"
   :group 'slime-mode
   :type 'boolean)
 
-
 (defvar slime-fuzzy-target-buffer nil
   "The buffer that is the target of the completion activities.")
 (defvar slime-fuzzy-start nil

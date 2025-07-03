@@ -255,14 +255,12 @@
 ;;     definitions.
 
 ;;; Code:
-
 (require 'pp)
 (require 'ring)
 (eval-and-compile
   (require 'cl-lib nil t)
   (require 'cl-lib "lib/cl-lib"))
 
-
 ;;; Constants and dynamically bound variables
 (defvar macrostep-overlays nil
   "List of all macro stepper overlays in the current buffer.")
@@ -465,7 +463,6 @@ be provided if a different value is used for
 The default value, `macrostep-macro-form-p', is specific to Emacs Lisp.")
 (make-variable-buffer-local 'macrostep-macro-form-p-function)
 
-
 ;;; Define keymap and minor mode
 (defvar macrostep-keymap
   (let ((map (make-sparse-keymap)))
@@ -534,7 +531,6 @@ quit and return to normal editing.
   (if (not buffer-read-only)
       (macrostep-mode 0)))
 
-
 ;;; Interactive functions
 ;;;###autoload
 (defun macrostep-expand (&optional toggle-separate-buffer)
@@ -673,9 +669,7 @@ If no more macro expansions are visible after this, exit
 	(goto-char (1- prev))
       (error "No previous macro form found"))))
 
-
 ;;; Utility functions (not language-specific)
-
 (defun macrostep-overlay-at-point ()
   "Return the innermost macro stepper overlay at point."
   (let ((result
@@ -721,9 +715,7 @@ Will not collapse overlays that begin at START and end at END."
 	     (overlay-get ol 'macrostep-original-text))
 	(macrostep-collapse-overlay ol t))))
 
-
 ;;; Emacs Lisp implementation
-
 (defun macrostep-sexp-bounds ()
   "Find the bounds of the macro form nearest point.
 
@@ -1117,7 +1109,5 @@ fontified using the same face (modulo the number of faces; see
 	  (put symbol 'macrostep-gensym-face face)
 	  face))))
 
-
 (provide 'macrostep)
-
 ;;; macrostep.el ends here

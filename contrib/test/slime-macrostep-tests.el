@@ -25,7 +25,6 @@
 ;;     MACROEXPAND-1 unless fixed up via
 
 ;;         (subst 'si::macro 'walker::macro env)
-
 (require 'slime-macrostep)
 (require 'slime-tests)
 (require 'cl-lib)
@@ -49,8 +48,6 @@
         (search-spaces-regexp "\\s-+"))
     (re-search-forward (regexp-quote form)))
   (goto-char (match-beginning 0)))
-
-
 
 (def-slime-test (slime-macrostep-expand-defmacro)
     (definition buffer-text original expansion)

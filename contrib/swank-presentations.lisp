@@ -120,26 +120,23 @@ The secondary value indicates the absence of an entry."
         (send-to-emacs `(:write-string "; No value" :repl-result))
         (mapc #'send values))))
 
-
 ;;;; Presentation menu protocol
-;;
+
 ;; To define a menu for a type of object, define a method
 ;; menu-choices-for-presentation on that object type.  This function
 ;; should return a list of two element lists where the first element is
 ;; the name of the menu action and the second is a function that will be
 ;; called if the menu is chosen. The function will be called with 3
 ;; arguments:
-;;
+
 ;; choice: The string naming the action from above
-;;
+
 ;; object: The object
-;;
+
 ;; id: The presentation id of the object
-;;
+
 ;; You might want append (when (next-method-p) (call-next-method)) to
 ;; pick up the Menu actions of superclasses.
-;;
-
 (defvar *presentation-active-menu* nil)
 
 (defun menu-choices-for-presentation-id (id)

@@ -106,9 +106,7 @@ See also `slime-highlight-compiler-notes' and
    `(swank:operate-on-system-for-emacs ,system ',operation ,@keyword-args)
    (slime-asdf-operation-finished-function system)))
 
-
 ;;; Interactive functions
-
 (defun slime-load-system (&optional system)
   "Compile and load an ASDF system.  
 
@@ -256,9 +254,7 @@ depending on it."
               (save-buffer buffer)))))
       (message "Done."))))
 
-
 ;;; REPL shortcuts
-
 (defslime-repl-shortcut slime-repl-load/force-system ("force-load-system")
   (:handler (lambda ()
               (interactive)

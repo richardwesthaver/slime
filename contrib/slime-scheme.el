@@ -24,9 +24,7 @@
     (put symbol 'slime-scheme-indent indent)
     (put symbol 'scheme-indent-function indent)))
 
-
 ;;; Initialization
-
 (defun slime-scheme-init ()
   (add-hook 'scheme-mode-hook 'slime-scheme-mode-hook)
   (add-hook 'slime-indentation-update-hooks 'slime-scheme-indentation-update)

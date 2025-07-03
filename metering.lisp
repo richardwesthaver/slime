@@ -1,334 +1,332 @@
 ;;; -*- Mode: LISP; Package: monitor; Syntax: Common-lisp; Base: 10.;  -*-
-;;; Tue Jan 25 18:32:28 1994 by Mark Kantrowitz <mkant@GLINDA.OZ.CS.CMU.EDU>
+;; Tue Jan 25 18:32:28 1994 by Mark Kantrowitz <mkant@GLINDA.OZ.CS.CMU.EDU>
 
-;;; ****************************************************************
-;;; Metering System ************************************************
-;;; ****************************************************************
-;;;
-;;; The Metering System is a portable Common Lisp code profiling tool.
-;;; It gathers timing and consing statistics for specified functions
-;;; while a program is running.
-;;;
-;;; The Metering System is a combination of
-;;;   o  the Monitor package written by Chris McConnell
-;;;   o  the Profile package written by Skef Wholey and Rob MacLachlan
-;;; The two systems were merged and extended by Mark Kantrowitz.
-;;;
-;;; Address: Carnegie Mellon University
-;;;          School of Computer Science
-;;;          Pittsburgh, PA 15213
-;;;
-;;; This code is in the public domain and is distributed without warranty
-;;; of any kind.
-;;;
-;;; This copy is from SLIME, http://www.common-lisp.net/project/slime/
-;;;
-;;;
-
-;;; ********************************
-;;; Change Log *********************
-;;; ********************************
-;;;
-;;; 26-JUN-90  mk       Merged functionality of Monitor and Profile packages.
-;;; 26-JUN-90  mk       Now handles both inclusive and exclusive statistics
-;;;                     with respect to nested calls. (Allows it to subtract
-;;;                     total monitoring overhead for each function, not just
-;;;                     the time spent monitoring the function itself.)
-;;; 26-JUN-90  mk       The table is now saved so that one may manipulate
-;;;                     the data (sorting it, etc.) even after the original
-;;;                     source of the data has been cleared.
-;;; 25-SEP-90  mk       Added get-cons functions for Lucid 3.0, MACL 1.3.2
-;;;                     required-arguments functions for Lucid 3.0,
-;;;                     Franz Allegro CL, and MACL 1.3.2.
-;;; 25-JAN-91  mk       Now uses fdefinition if available.
-;;; 25-JAN-91  mk       Replaced (and :allegro (not :coral)) with :excl.
-;;;                     Much better solution for the fact that both call
-;;;                     themselves :allegro.
-;;;  5-JUL-91 mk        Fixed warning to occur only when file is loaded
-;;;                     uncompiled.
-;;;  5-JUL-91 mk        When many unmonitored functions, print out number
-;;;                     instead of whole list.
-;;; 24-MAR-92 mk        Updated for CLtL2 compatibility. space measuring
-;;;                     doesn't work in MCL, but fixed so that timing
-;;;                     statistics do.
-;;; 26-MAR-92 mk        Updated for Lispworks. Replaced :ccl with
-;;;                     (and :ccl (not :lispworks)).
-;;; 27-MAR-92 mk        Added get-cons for Allegro-V4.0.
-;;; 01-JAN-93 mk  v2.0  Support for MCL 2.0, CMU CL 16d, Allegro V3.1/4.0/4.1,
-;;;                     Lucid 4.0, ibcl
-;;; 25-JAN-94 mk  v2.1  Patches for CLISP from Bruno Haible.
-;;; 01-APR-05 lgorrie   Removed support for all Lisps except CLISP and OpenMCL.
-;;;                     Purely to cut down on stale code (e.g. #+cltl2) in this
-;;;                     version that is bundled with SLIME.
-;;; 22-Aug-08 stas      Define TIME-TYPE for Clozure CL.
-;;; 07-Aug-12 heller    Break lines at 80 columns
-;;;
-
-;;; ********************************
-;;; To Do **************************
-;;; ********************************
-;;;
-;;;    - Need get-cons for Allegro, AKCL.
-;;;    - Speed up monitoring code. Replace use of hash tables with an embedded
-;;;      offset in an array so that it will be faster than using gethash.
-;;;      (i.e., svref/closure reference is usually faster than gethash).
-;;;    - Beware of (get-internal-run-time) overflowing. Yikes!
-;;;    - Check robustness with respect to profiled functions.
-;;;    - Check logic of computing inclusive and exclusive time and consing.
-;;;      Especially wrt incf/setf comment below. Should be incf, so we
-;;;      sum recursive calls.
-;;;    - Add option to record caller statistics -- this would list who
-;;;      called which functions and how often.
-;;;    - switches to turn timing/CONSING statistics collection on/off.
+;; ****************************************************************
+;; Metering System ************************************************
+;; ****************************************************************
 
-
-;;; ********************************
-;;; Notes **************************
-;;; ********************************
-;;;
-;;;    METERING has been tested (successfully) in the following lisps:
-;;;       CMU Common Lisp (16d, Python Compiler 1.0 ) :new-compiler
-;;;       CMU Common Lisp (M2.9 15-Aug-90, Compiler M1.8 15-Aug-90)
-;;;       Macintosh Allegro Common Lisp (1.3.2)
-;;;       Macintosh Common Lisp (2.0)
-;;;       ExCL (Franz Allegro CL 3.1.12 [DEC 3100] 11/19/90)   :allegro-v3.1
-;;;       ExCL (Franz Allegro CL 4.0.1 [Sun4] 2/8/91)          :allegro-v4.0
-;;;       ExCL (Franz Allegro CL 4.1 [SPARC R1] 8/28/92 14:06) :allegro-v4.1
-;;;       ExCL (Franz ACL 5.0.1 [Linux/X86] 6/29/99 16:11)     :allegro-v5.0.1
-;;;       Lucid CL (Version 2.1 6-DEC-87)
-;;;       Lucid Common Lisp (3.0)
-;;;       Lucid Common Lisp (4.0.1 HP-700 12-Aug-91)
-;;;       AKCL (1.86, June 30, 1987 or later)
-;;;       Ibuki Common Lisp (Version 2, release 01.027)
-;;;       CLISP (January 1994)
-;;;
-;;;    METERING needs to be tested in the following lisps:
-;;;       Symbolics Common Lisp (8.0)
-;;;       KCL (June 3, 1987 or later)
-;;;       TI (Release 4.1 or later)
-;;;       Golden Common Lisp (3.1 IBM-PC)
-;;;       VAXLisp (2.0, 3.1)
-;;;       Procyon Common Lisp
+;; The Metering System is a portable Common Lisp code profiling tool.
+;; It gathers timing and consing statistics for specified functions
+;; while a program is running.
 
-
-;;; ****************************************************************
-;;; Documentation **************************************************
-;;; ****************************************************************
-;;;
-;;; This system runs in any valid Common Lisp. Four small
-;;; implementation-dependent changes can be made to improve performance
-;;; and prettiness. In the section labelled "Implementation Dependent
-;;; Changes" below, you should tailor the functions REQUIRED-ARGUMENTS,
-;;; GET-CONS, GET-TIME, and TIME-UNITS-PER-SECOND to your implementation
-;;; for the best results. If GET-CONS is not specified for your
-;;; implementation, no consing information will be reported. The other
-;;; functions will default to working forms, albeit inefficient, in
-;;; non-CMU implementations. If you tailor these functions for a particular
-;;; version of Common Lisp, we'd appreciate receiving the code.
-;;;
-
-;;; ****************************************************************
-;;; Usage Notes ****************************************************
-;;; ****************************************************************
-;;;
-;;; SUGGESTED USAGE:
-;;;
-;;; Start by monitoring big pieces of the program, then carefully choose
-;;; which functions close to, but not in, the inner loop are to be
-;;; monitored next. Don't monitor functions that are called by other
-;;; monitored functions: you will only confuse yourself.
-;;;
-;;; If the per-call time reported is less than 1/10th of a second, then
-;;; consider the clock resolution and profiling overhead before you believe
-;;; the time. It may be that you will need to run your program many times
-;;; in order to average out to a higher resolution.
-;;;
-;;; The easiest way to use this package is to load it and execute either
-;;;     (swank-monitor:with-monitoring (names*) ()
-;;;         your-forms*)
-;;; or
-;;;     (swank-monitor:monitor-form your-form)
-;;; The former allows you to specify which functions will be monitored; the
-;;; latter monitors all functions in the current package. Both automatically
-;;; produce a table of statistics. Other variants can be constructed from
-;;; the monitoring primitives, which are described below, along with a
-;;; fuller description of these two macros.
-;;;
-;;; For best results, compile this file before using.
-;;;
-;;;
-;;; CLOCK RESOLUTION:
-;;;
-;;; Unless you are very lucky, the length of your machine's clock "tick" is
-;;; probably much longer than the time it takes a simple function to run.
-;;; For example, on the IBM RT, the clock resolution is 1/50th of a second.
-;;; This means that if a function is only called a few times, then only the
-;;; first couple of decimal places are really meaningful.
-;;;
-;;;
-;;; MONITORING OVERHEAD:
-;;;
-;;; The added monitoring code takes time to run every time that the monitored
-;;; function is called, which can disrupt the attempt to collect timing
-;;; information. In order to avoid serious inflation of the times for functions
-;;; that take little time to run, an estimate of the overhead due to monitoring
-;;; is subtracted from the times reported for each function.
-;;;
-;;; Although this correction works fairly well, it is not totally accurate,
-;;; resulting in times that become increasingly meaningless for functions
-;;; with short runtimes. For example, subtracting the estimated overhead
-;;; may result in negative times for some functions. This is only a concern
-;;; when the estimated profiling overhead is many times larger than
-;;; reported total CPU time.
-;;;
-;;; If you monitor functions that are called by monitored functions, in
-;;; :inclusive mode the monitoring overhead for the inner function is
-;;; subtracted from the CPU time for the outer function. [We do this by
-;;; counting for each function not only the number of calls to *this*
-;;; function, but also the number of monitored calls while it was running.]
-;;; In :exclusive mode this is not necessary, since we subtract the
-;;; monitoring time of inner functions, overhead & all.
-;;;
-;;; Otherwise, the estimated monitoring overhead is not represented in the
-;;; reported total CPU time. The sum of total CPU time and the estimated
-;;; monitoring overhead should be close to the total CPU time for the
-;;; entire monitoring run (as determined by TIME).
-;;;
-;;; A timing overhead factor is computed at load time. This will be incorrect
-;;; if the monitoring code is run in a different environment than this file
-;;; was loaded in. For example, saving a core image on a high performance
-;;; machine and running it on a low performance one will result in the use
-;;; of an erroneously small overhead factor.
-;;;
-;;;
-;;; If your times vary widely, possible causes are:
-;;;    - Garbage collection.  Try turning it off, then running your code.
-;;;      Be warned that monitoring code will probably cons when it does
-;;;      (get-internal-run-time).
-;;;    - Swapping.  If you have enough memory, execute your form once
-;;;      before monitoring so that it will be swapped into memory. Otherwise,
-;;;      get a bigger machine!
-;;;    - Resolution of internal-time-units-per-second.  If this value is
-;;;      too low, then the timings become wild. You can try executing more
-;;;      of whatever your test is, but that will only work if some of your
-;;;      paths do not match the timer resolution.
-;;;      internal-time-units-per-second is so coarse -- on a Symbolics it is
-;;;      977, in MACL it is 60.
-;;;
-;;;
-
-;;; ****************************************************************
-;;; Interface ******************************************************
-;;; ****************************************************************
-;;;
-;;; WITH-MONITORING (&rest functions)                         [Macro]
-;;;                 (&optional (nested :exclusive)
-;;;                            (threshold 0.01)
-;;;                            (key :percent-time))
-;;;                 &body body
-;;; The named functions will be set up for monitoring, the body forms executed,
-;;; a table of results printed, and the functions unmonitored. The nested,
-;;; threshold, and key arguments are passed to report-monitoring below.
-;;;
-;;; MONITOR-FORM form                                         [Macro]
-;;;               &optional (nested :exclusive)
-;;;                         (threshold 0.01)
-;;;                         (key :percent-time)
-;;; All functions in the current package are set up for monitoring while
-;;; the form is executed, and automatically unmonitored after a table of
-;;; results has been printed. The nested, threshold, and key arguments
-;;; are passed to report-monitoring below.
-;;;
-;;; *MONITORED-FUNCTIONS*                                     [Variable]
-;;; This holds a list of all functions that are currently being monitored.
-;;;
-;;; MONITOR &rest names                                       [Macro]
-;;; The named functions will be set up for monitoring by augmenting
-;;; their function definitions with code that gathers statistical information
-;;; about code performance. As with the TRACE macro, the function names are
-;;; not evaluated. Calls the function SWANK-MONITOR::MONITORING-ENCAPSULATE on each
-;;; function name. If no names are specified, returns a list of all
-;;; monitored functions.
-;;;
-;;; If name is not a symbol, it is evaled to return the appropriate
-;;; closure. This allows you to monitor closures stored anywhere like
-;;; in a variable, array or structure. Most other monitoring packages
-;;; can't handle this.
-;;;
-;;; MONITOR-ALL &optional (package *package*)                 [Function]
-;;; Monitors all functions in the specified package, which defaults to
-;;; the current package.
-;;;
-;;; UNMONITOR &rest names                                     [Macro]
-;;; Removes monitoring code from the named functions. If no names are
-;;; specified, all currently monitored functions are unmonitored.
-;;;
-;;; RESET-MONITORING-INFO name                                [Function]
-;;; Resets the monitoring statistics for the specified function.
-;;;
-;;; RESET-ALL-MONITORING                                      [Function]
-;;; Resets the monitoring statistics for all monitored functions.
-;;;
-;;; MONITORED name                                            [Function]
-;;; Predicate to test whether a function is monitored.
-;;;
-;;; REPORT-MONITORING &optional names                         [Function]
-;;;                             (nested :exclusive)
-;;;                             (threshold 0.01)
-;;;                             (key :percent-time)
-;;; Creates a table of monitoring information for the specified list
-;;; of names, and displays the table using display-monitoring-results.
-;;; If names is :all or nil, uses all currently monitored functions.
-;;; Takes the following arguments:
-;;;    - NESTED specifies whether nested calls of monitored functions
-;;;      are included in the times for monitored functions.
-;;;      o  If :inclusive, the per-function information is for the entire
-;;;         duration of the monitored function, including any calls to
-;;;         other monitored functions. If functions A and B are monitored,
-;;;         and A calls B, then the accumulated time and consing for A will
-;;;         include the time and consing of B.  Note: if a function calls
-;;;         itself recursively, the time spent in the inner call(s) may
-;;;         be counted several times.
-;;;      o  If :exclusive, the information excludes time attributed to
-;;;         calls to other monitored functions. This is the default.
-;;;    - THRESHOLD specifies that only functions which have been executed
-;;;      more than threshold percent of the time will be reported. Defaults
-;;;      to 1%. If a threshold of 0 is specified, all functions are listed,
-;;;      even those with 0 or negative running times (see note on overhead).
-;;;    - KEY specifies that the table be sorted by one of the following
-;;;      sort keys:
-;;;         :function       alphabetically by function name
-;;;         :percent-time   by percent of total execution time
-;;;         :percent-cons   by percent of total consing
-;;;         :calls          by number of times the function was called
-;;;         :time-per-call  by average execution time per function
-;;;         :cons-per-call  by average consing per function
-;;;         :time           same as :percent-time
-;;;         :cons           same as :percent-cons
-;;;
-;;; REPORT &key (names :all)                                  [Function]
-;;;             (nested :exclusive)
-;;;             (threshold 0.01)
-;;;             (sort-key :percent-time)
-;;;             (ignore-no-calls nil)
-;;;
-;;; Same as REPORT-MONITORING but we use a nicer keyword interface.
-;;;
-;;; DISPLAY-MONITORING-RESULTS &optional (threshold 0.01)     [Function]
-;;;                                      (key :percent-time)
-;;; Prints a table showing for each named function:
-;;;    - the total CPU time used in that function for all calls
-;;;    - the total number of bytes consed in that function for all calls
-;;;    - the total number of calls
-;;;    - the average amount of CPU time per call
-;;;    - the average amount of consing per call
-;;;    - the percent of total execution time spent executing that function
-;;;    - the percent of total consing spent consing in that function
-;;; Summary totals of the CPU time, consing, and calls columns are printed.
-;;; An estimate of the monitoring overhead is also printed. May be run
-;;; even after unmonitoring all the functions, to play with the data.
-;;;
-;;; SAMPLE TABLE:
+;; The Metering System is a combination of
+;;   o  the Monitor package written by Chris McConnell
+;;   o  the Profile package written by Skef Wholey and Rob MacLachlan
+;; The two systems were merged and extended by Mark Kantrowitz.
+
+;; Address: Carnegie Mellon University
+;;          School of Computer Science
+;;          Pittsburgh, PA 15213
+
+;; This code is in the public domain and is distributed without warranty
+;; of any kind.
+
+;; This copy is from SLIME, http://www.common-lisp.net/project/slime/
+
+;; ********************************
+;; Change Log *********************
+;; ********************************
+;;
+;; 26-JUN-90  mk       Merged functionality of Monitor and Profile packages.
+;; 26-JUN-90  mk       Now handles both inclusive and exclusive statistics
+;;                     with respect to nested calls. (Allows it to subtract
+;;                     total monitoring overhead for each function, not just
+;;                     the time spent monitoring the function itself.)
+;; 26-JUN-90  mk       The table is now saved so that one may manipulate
+;;                     the data (sorting it, etc.) even after the original
+;;                     source of the data has been cleared.
+;; 25-SEP-90  mk       Added get-cons functions for Lucid 3.0, MACL 1.3.2
+;;                     required-arguments functions for Lucid 3.0,
+;;                     Franz Allegro CL, and MACL 1.3.2.
+;; 25-JAN-91  mk       Now uses fdefinition if available.
+;; 25-JAN-91  mk       Replaced (and :allegro (not :coral)) with :excl.
+;;                     Much better solution for the fact that both call
+;;                     themselves :allegro.
+;;  5-JUL-91 mk        Fixed warning to occur only when file is loaded
+;;                     uncompiled.
+;;  5-JUL-91 mk        When many unmonitored functions, print out number
+;;                     instead of whole list.
+;; 24-MAR-92 mk        Updated for CLtL2 compatibility. space measuring
+;;                     doesn't work in MCL, but fixed so that timing
+;;                     statistics do.
+;; 26-MAR-92 mk        Updated for Lispworks. Replaced :ccl with
+;;                     (and :ccl (not :lispworks)).
+;; 27-MAR-92 mk        Added get-cons for Allegro-V4.0.
+;; 01-JAN-93 mk  v2.0  Support for MCL 2.0, CMU CL 16d, Allegro V3.1/4.0/4.1,
+;;                     Lucid 4.0, ibcl
+;; 25-JAN-94 mk  v2.1  Patches for CLISP from Bruno Haible.
+;; 01-APR-05 lgorrie   Removed support for all Lisps except CLISP and OpenMCL.
+;;                     Purely to cut down on stale code (e.g. #+cltl2) in this
+;;                     version that is bundled with SLIME.
+;; 22-Aug-08 stas      Define TIME-TYPE for Clozure CL.
+;; 07-Aug-12 heller    Break lines at 80 columns
+;;
+
+;; ********************************
+;; To Do **************************
+;; ********************************
+;;
+;;    - Need get-cons for Allegro, AKCL.
+;;    - Speed up monitoring code. Replace use of hash tables with an embedded
+;;      offset in an array so that it will be faster than using gethash.
+;;      (i.e., svref/closure reference is usually faster than gethash).
+;;    - Beware of (get-internal-run-time) overflowing. Yikes!
+;;    - Check robustness with respect to profiled functions.
+;;    - Check logic of computing inclusive and exclusive time and consing.
+;;      Especially wrt incf/setf comment below. Should be incf, so we
+;;      sum recursive calls.
+;;    - Add option to record caller statistics -- this would list who
+;;      called which functions and how often.
+;;    - switches to turn timing/CONSING statistics collection on/off.
+
+
+;; ********************************
+;; Notes **************************
+;; ********************************
+;;
+;;    METERING has been tested (successfully) in the following lisps:
+;;       CMU Common Lisp (16d, Python Compiler 1.0 ) :new-compiler
+;;       CMU Common Lisp (M2.9 15-Aug-90, Compiler M1.8 15-Aug-90)
+;;       Macintosh Allegro Common Lisp (1.3.2)
+;;       Macintosh Common Lisp (2.0)
+;;       ExCL (Franz Allegro CL 3.1.12 [DEC 3100] 11/19/90)   :allegro-v3.1
+;;       ExCL (Franz Allegro CL 4.0.1 [Sun4] 2/8/91)          :allegro-v4.0
+;;       ExCL (Franz Allegro CL 4.1 [SPARC R1] 8/28/92 14:06) :allegro-v4.1
+;;       ExCL (Franz ACL 5.0.1 [Linux/X86] 6/29/99 16:11)     :allegro-v5.0.1
+;;       Lucid CL (Version 2.1 6-DEC-87)
+;;       Lucid Common Lisp (3.0)
+;;       Lucid Common Lisp (4.0.1 HP-700 12-Aug-91)
+;;       AKCL (1.86, June 30, 1987 or later)
+;;       Ibuki Common Lisp (Version 2, release 01.027)
+;;       CLISP (January 1994)
+;;
+;;    METERING needs to be tested in the following lisps:
+;;       Symbolics Common Lisp (8.0)
+;;       KCL (June 3, 1987 or later)
+;;       TI (Release 4.1 or later)
+;;       Golden Common Lisp (3.1 IBM-PC)
+;;       VAXLisp (2.0, 3.1)
+;;       Procyon Common Lisp
+
+
+;; ****************************************************************
+;; Documentation **************************************************
+;; ****************************************************************
+;;
+;; This system runs in any valid Common Lisp. Four small
+;; implementation-dependent changes can be made to improve performance
+;; and prettiness. In the section labelled "Implementation Dependent
+;; Changes" below, you should tailor the functions REQUIRED-ARGUMENTS,
+;; GET-CONS, GET-TIME, and TIME-UNITS-PER-SECOND to your implementation
+;; for the best results. If GET-CONS is not specified for your
+;; implementation, no consing information will be reported. The other
+;; functions will default to working forms, albeit inefficient, in
+;; non-CMU implementations. If you tailor these functions for a particular
+;; version of Common Lisp, we'd appreciate receiving the code.
+;;
+
+;; ****************************************************************
+;; Usage Notes ****************************************************
+;; ****************************************************************
+;;
+;; SUGGESTED USAGE:
+;;
+;; Start by monitoring big pieces of the program, then carefully choose
+;; which functions close to, but not in, the inner loop are to be
+;; monitored next. Don't monitor functions that are called by other
+;; monitored functions: you will only confuse yourself.
+;;
+;; If the per-call time reported is less than 1/10th of a second, then
+;; consider the clock resolution and profiling overhead before you believe
+;; the time. It may be that you will need to run your program many times
+;; in order to average out to a higher resolution.
+;;
+;; The easiest way to use this package is to load it and execute either
+;;     (swank-monitor:with-monitoring (names*) ()
+;;         your-forms*)
+;; or
+;;     (swank-monitor:monitor-form your-form)
+;; The former allows you to specify which functions will be monitored; the
+;; latter monitors all functions in the current package. Both automatically
+;; produce a table of statistics. Other variants can be constructed from
+;; the monitoring primitives, which are described below, along with a
+;; fuller description of these two macros.
+;;
+;; For best results, compile this file before using.
+;;
+;;
+;; CLOCK RESOLUTION:
+;;
+;; Unless you are very lucky, the length of your machine's clock "tick" is
+;; probably much longer than the time it takes a simple function to run.
+;; For example, on the IBM RT, the clock resolution is 1/50th of a second.
+;; This means that if a function is only called a few times, then only the
+;; first couple of decimal places are really meaningful.
+;;
+;;
+;; MONITORING OVERHEAD:
+;;
+;; The added monitoring code takes time to run every time that the monitored
+;; function is called, which can disrupt the attempt to collect timing
+;; information. In order to avoid serious inflation of the times for functions
+;; that take little time to run, an estimate of the overhead due to monitoring
+;; is subtracted from the times reported for each function.
+;;
+;; Although this correction works fairly well, it is not totally accurate,
+;; resulting in times that become increasingly meaningless for functions
+;; with short runtimes. For example, subtracting the estimated overhead
+;; may result in negative times for some functions. This is only a concern
+;; when the estimated profiling overhead is many times larger than
+;; reported total CPU time.
+;;
+;; If you monitor functions that are called by monitored functions, in
+;; :inclusive mode the monitoring overhead for the inner function is
+;; subtracted from the CPU time for the outer function. [We do this by
+;; counting for each function not only the number of calls to *this*
+;; function, but also the number of monitored calls while it was running.]
+;; In :exclusive mode this is not necessary, since we subtract the
+;; monitoring time of inner functions, overhead & all.
+;;
+;; Otherwise, the estimated monitoring overhead is not represented in the
+;; reported total CPU time. The sum of total CPU time and the estimated
+;; monitoring overhead should be close to the total CPU time for the
+;; entire monitoring run (as determined by TIME).
+;;
+;; A timing overhead factor is computed at load time. This will be incorrect
+;; if the monitoring code is run in a different environment than this file
+;; was loaded in. For example, saving a core image on a high performance
+;; machine and running it on a low performance one will result in the use
+;; of an erroneously small overhead factor.
+;;
+;;
+;; If your times vary widely, possible causes are:
+;;    - Garbage collection.  Try turning it off, then running your code.
+;;      Be warned that monitoring code will probably cons when it does
+;;      (get-internal-run-time).
+;;    - Swapping.  If you have enough memory, execute your form once
+;;      before monitoring so that it will be swapped into memory. Otherwise,
+;;      get a bigger machine!
+;;    - Resolution of internal-time-units-per-second.  If this value is
+;;      too low, then the timings become wild. You can try executing more
+;;      of whatever your test is, but that will only work if some of your
+;;      paths do not match the timer resolution.
+;;      internal-time-units-per-second is so coarse -- on a Symbolics it is
+;;      977, in MACL it is 60.
+;;
+;;
+
+;; ****************************************************************
+;; Interface ******************************************************
+;; ****************************************************************
+;;
+;; WITH-MONITORING (&rest functions)                         [Macro]
+;;                 (&optional (nested :exclusive)
+;;                            (threshold 0.01)
+;;                            (key :percent-time))
+;;                 &body body
+;; The named functions will be set up for monitoring, the body forms executed,
+;; a table of results printed, and the functions unmonitored. The nested,
+;; threshold, and key arguments are passed to report-monitoring below.
+;;
+;; MONITOR-FORM form                                         [Macro]
+;;               &optional (nested :exclusive)
+;;                         (threshold 0.01)
+;;                         (key :percent-time)
+;; All functions in the current package are set up for monitoring while
+;; the form is executed, and automatically unmonitored after a table of
+;; results has been printed. The nested, threshold, and key arguments
+;; are passed to report-monitoring below.
+;;
+;; *MONITORED-FUNCTIONS*                                     [Variable]
+;; This holds a list of all functions that are currently being monitored.
+;;
+;; MONITOR &rest names                                       [Macro]
+;; The named functions will be set up for monitoring by augmenting
+;; their function definitions with code that gathers statistical information
+;; about code performance. As with the TRACE macro, the function names are
+;; not evaluated. Calls the function SWANK-MONITOR::MONITORING-ENCAPSULATE on each
+;; function name. If no names are specified, returns a list of all
+;; monitored functions.
+;;
+;; If name is not a symbol, it is evaled to return the appropriate
+;; closure. This allows you to monitor closures stored anywhere like
+;; in a variable, array or structure. Most other monitoring packages
+;; can't handle this.
+;;
+;; MONITOR-ALL &optional (package *package*)                 [Function]
+;; Monitors all functions in the specified package, which defaults to
+;; the current package.
+;;
+;; UNMONITOR &rest names                                     [Macro]
+;; Removes monitoring code from the named functions. If no names are
+;; specified, all currently monitored functions are unmonitored.
+;;
+;; RESET-MONITORING-INFO name                                [Function]
+;; Resets the monitoring statistics for the specified function.
+;;
+;; RESET-ALL-MONITORING                                      [Function]
+;; Resets the monitoring statistics for all monitored functions.
+;;
+;; MONITORED name                                            [Function]
+;; Predicate to test whether a function is monitored.
+;;
+;; REPORT-MONITORING &optional names                         [Function]
+;;                             (nested :exclusive)
+;;                             (threshold 0.01)
+;;                             (key :percent-time)
+;; Creates a table of monitoring information for the specified list
+;; of names, and displays the table using display-monitoring-results.
+;; If names is :all or nil, uses all currently monitored functions.
+;; Takes the following arguments:
+;;    - NESTED specifies whether nested calls of monitored functions
+;;      are included in the times for monitored functions.
+;;      o  If :inclusive, the per-function information is for the entire
+;;         duration of the monitored function, including any calls to
+;;         other monitored functions. If functions A and B are monitored,
+;;         and A calls B, then the accumulated time and consing for A will
+;;         include the time and consing of B.  Note: if a function calls
+;;         itself recursively, the time spent in the inner call(s) may
+;;         be counted several times.
+;;      o  If :exclusive, the information excludes time attributed to
+;;         calls to other monitored functions. This is the default.
+;;    - THRESHOLD specifies that only functions which have been executed
+;;      more than threshold percent of the time will be reported. Defaults
+;;      to 1%. If a threshold of 0 is specified, all functions are listed,
+;;      even those with 0 or negative running times (see note on overhead).
+;;    - KEY specifies that the table be sorted by one of the following
+;;      sort keys:
+;;         :function       alphabetically by function name
+;;         :percent-time   by percent of total execution time
+;;         :percent-cons   by percent of total consing
+;;         :calls          by number of times the function was called
+;;         :time-per-call  by average execution time per function
+;;         :cons-per-call  by average consing per function
+;;         :time           same as :percent-time
+;;         :cons           same as :percent-cons
+;;
+;; REPORT &key (names :all)                                  [Function]
+;;             (nested :exclusive)
+;;             (threshold 0.01)
+;;             (sort-key :percent-time)
+;;             (ignore-no-calls nil)
+;;
+;; Same as REPORT-MONITORING but we use a nicer keyword interface.
+;;
+;; DISPLAY-MONITORING-RESULTS &optional (threshold 0.01)     [Function]
+;;                                      (key :percent-time)
+;; Prints a table showing for each named function:
+;;    - the total CPU time used in that function for all calls
+;;    - the total number of bytes consed in that function for all calls
+;;    - the total number of calls
+;;    - the average amount of CPU time per call
+;;    - the average amount of consing per call
+;;    - the percent of total execution time spent executing that function
+;;    - the percent of total consing spent consing in that function
+;; Summary totals of the CPU time, consing, and calls columns are printed.
+;; An estimate of the monitoring overhead is also printed. May be run
+;; even after unmonitoring all the functions, to play with the data.
+;;
+;; SAMPLE TABLE:
 #|
                                                Cons
                  %     %                       Per      Total   Total
@@ -342,24 +340,19 @@ FEATURE-P:       0.02  0.00    570  0.000028      0  0.015680       0
 TOTAL:                        1173                   0.828950       0
 Estimated total monitoring overhead: 0.88 seconds
 |#
-
-;;; ****************************************************************
-;;; METERING *******************************************************
-;;; ****************************************************************
 
-;;; ********************************
-;;; Warn people using the wrong Lisp
-;;; ********************************
+;; ****************************************************************
+;; METERING *******************************************************
+;; ****************************************************************
 
+;; ********************************
+;; Warn people using the wrong Lisp
+;; ********************************
 #-(or clisp openmcl clasp)
 (warn "metering.lisp does not support your Lisp implementation!")
 
-;;; ********************************
-;;; Packages ***********************
-;;; ********************************
-
-;;; For CLtL2 compatible lisps
-
+;;; Packages
+;; For CLtL2 compatible lisps
 (defpackage "SWANK-MONITOR" (:use "COMMON-LISP")
   (:export "*MONITORED-FUNCTIONS*"
 	   "MONITOR" "MONITOR-ALL" "UNMONITOR" "MONITOR-FORM"
@@ -383,7 +376,6 @@ Estimated total monitoring overhead: 0.88 seconds
 (defparameter *metering-version* "v2.1 25-JAN-94"
   "Current version number/date for Metering.")
 
-
 ;;; ****************************************************************
 ;;; Implementation Dependent Definitions ***************************
 ;;; ****************************************************************
@@ -596,7 +588,6 @@ Required-Arguments function."))
 (required-arguments 'test2) => 2 t
 |#
 
-
 ;;; ****************************************************************
 ;;; Main METERING Code *********************************************
 ;;; ****************************************************************

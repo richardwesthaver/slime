@@ -90,13 +90,11 @@ must always be supplied. This way the :TYPE slot option need not
 include some arbitrary initial value like NIL."
   (error "A required &KEY or &OPTIONAL argument was not supplied."))
 
-
 ;;;; Hooks
-;;;
+
 ;;; We use Emacs-like `add-hook' and `run-hook' utilities to support
 ;;; simple indirection. The interface is more CLish than the Emacs
 ;;; Lisp one.
-
 (defmacro add-hook (place function)
   "Add FUNCTION to the list of values on PLACE."
   `(pushnew ,function ,place))
@@ -128,16 +126,14 @@ Backend code should treat the connection structure as opaque.")
 (defvar *after-init-hook* '()
   "Hook run after user init files are loaded.")
 
-
 ;;;; Connections
-;;;
+
 ;;; Connection structures represent the network connections between
 ;;; Emacs and Lisp. Each has a socket stream, a set of user I/O
 ;;; streams that redirect to Emacs, and optionally a second socket
 ;;; used solely to pipe user-output to Emacs (an optimization).  This
 ;;; is also the place where we keep everything that needs to be
 ;;; freed/closed/killed when we disconnect.
-
 (defstruct (connection
              (:constructor %make-connection)
              (:conc-name connection.)
@@ -275,12 +271,9 @@ to T unless you want to debug swank internals.")
   (declare (ignore connection))
   (emacs-connected))
 
-
 ;;;; Utilities
 
-
 ;;;;; Logging
-
 (defvar *swank-io-package*
   (let ((package (make-package :swank-io-package :use '())))
     (import '(nil t quote) package)
@@ -370,9 +363,7 @@ Useful for low level debugging."
 (defun ascii-char-p (c) 
   (<= (char-code c) 127))
 
-
 ;;;;; Helper macros
-
 (defmacro dcase (value &body patterns)
   "Dispatch VALUE to one of PATTERNS.
 A cross between `case' and `destructuring-bind'.
@@ -398,7 +389,6 @@ corresponding values in the CDR of VALUE."
                '()
                `((t (error "dcase failed: ~S" ,tmp))))))))
 
-
 (defun queue-thread-interrupt (thread function)
   (interrupt-thread thread
                     (lambda ()
@@ -481,7 +471,6 @@ This is like defvar, but NAME will not be initialized."
     (defvar ,name)
     (setf (documentation ',name 'variable) ,doc)))
 
-
 (defvar *connection-lock* (make-lock))
 
 (defvar *connections* '()
@@ -528,9 +517,8 @@ recently established one."
                  (ignore-errors (kill-thread thread)))))
             (t
              (warn "No server for ~s: ~s" key value))))))
-
-;;;;; Misc
 
+;;;;; Misc
 (defun use-threads-p ()
   (eq (connection.communication-style *emacs-connection*) :spawn))
 
@@ -541,9 +529,7 @@ recently established one."
 (defun ensure-list (thing)
   (if (listp thing) thing (list thing)))
 
-
 ;;;;; Symbols
-
 ;; FIXME: this docstring is more confusing than helpful.
 (defun symbol-status (symbol &optional (package (symbol-package symbol)))
   "Returns one of 
@@ -623,9 +609,7 @@ about internal symbols most times. As the spec says:
 If PACKAGE is not specified, the home package of SYMBOL is used."
   (eq (symbol-status symbol package) :external))
 
-
 ;;;; TCP Server
-
 (defvar *communication-style* (preferred-communication-style))
 
 (defvar *dont-close* nil
@@ -797,9 +781,7 @@ if the file doesn't exist; otherwise the first line of the file."
     (format *log-output* "~&;; Swank started at port: ~D.~%" port)
     (force-output *log-output*)))
 
-
 ;;;;; Event Decoding/Encoding
-
 (defun decode-message (stream)
   "Read an S-expression from STREAM using the SLIME protocol."
   (log-event "decode-message~%")
@@ -817,9 +799,7 @@ if the file doesn't exist; otherwise the first line of the file."
     (handler-bind ((error #'signal-swank-error))
       (write-message message *swank-io-package* stream))))
 
-
 ;;;;; Event Processing
-
 (defvar *sldb-quit-restart* nil
   "The restart that will be invoked when the user calls sldb-quit.")
 
@@ -1015,7 +995,6 @@ The processing is done in the extent of the toplevel restart."
                                          ,(safe-condition-message condition))
                          (current-socket-io))))))
 
-
 (defun send-event (thread event)
   (log-event "send-event: ~s ~s~%" thread event)
   (let ((c *emacs-connection*))
@@ -1039,12 +1018,9 @@ The processing is done in the extent of the toplevel restart."
          (dispatch-event c event)))
       (maybe-slow-down))))
   
-
 ;;;;;; Flow control
-
 ;; After sending N (usually 100) messages we slow down and ping Emacs
 ;; to make sure that everything we have sent so far was received.
-
 (defconstant send-counter-limit 100)
 
 (defun maybe-slow-down ()
@@ -1059,7 +1035,6 @@ The processing is done in the extent of the toplevel restart."
     (send-to-emacs `(:ping ,(current-thread-id) ,tag))
     (wait-for-event pattern)))
 
-
 (defun wait-for-event (pattern &optional timeout)
   "Scan the event queue for PATTERN and return the event.
 If TIMEOUT is 'nil wait until a matching event is enqued.
@@ -1118,7 +1093,6 @@ event was found."
         (t (error "Invalid pattern: ~S" pattern))))
 
 
-
 (defun spawn-threads-for-connection (connection)
   (setf (mconn.control-thread connection)
         (spawn (lambda () (control-thread connection))
@@ -1262,9 +1236,7 @@ event was found."
                 (write-char c str)))
       (end-of-file () (error 'end-of-repl-input :stream stream)))))
 
-
 ;;; Channels
-
 ;; FIXME: should be per connection not global.
 (defvar *channels* '())
 (defvar *channel-counter* 0)
@@ -1296,8 +1268,6 @@ event was found."
 
 (defun send-to-remote-channel (channel-id msg)
   (send-to-emacs `(:channel-send ,channel-id ,msg)))
-
-
 
 (defvar *slime-features* nil
   "The feature list that has been sent to Emacs.")
@@ -1452,9 +1422,7 @@ VERSION: the protocol version"
 (defslimefun toggle-debug-on-swank-error ()
   (setf (debug-on-swank-error) (not (debug-on-swank-error))))
 
-
 ;;;; Reading and printing
-
 (define-special *buffer-package*     
     "Package corresponding to slime-buffer-package.  
 
@@ -1657,9 +1625,7 @@ Return nil if no package matches."
                          :test #'string=)))
         *readtable*)))
 
-
 ;;;; Evaluation
-
 (defvar *pending-continuations* '()
   "List of continuations for Emacs. (thread local)")
 
@@ -1922,12 +1888,9 @@ MAP -- rewrite the chars in STRING according to this alist."
                   (t (write-char c stream)))))
     (write-char #\" stream)))
 
-
 ;;;; Prompt 
-
 ;; FIXME: do we really need 45 lines of code just to figure out the
 ;; prompt?
-
 (defvar *canonical-package-nicknames*
   `((:common-lisp-user . :cl-user))
   "Canonical package names to use instead of shortest name/nickname.")
@@ -1951,8 +1914,6 @@ MAP -- rewrite the chars in STRING according to this alist."
                                    name
                                    shortest)
               finally (return shortest)))
-
-
 
 (defslimefun ed-in-emacs (&optional what)
   "Edit WHAT in Emacs.
@@ -2040,9 +2001,7 @@ at least SECONDS."
              (t (sleep (/ (- end now)
                           internal-time-units-per-second))))))))
 
-
 ;;;; Debugger
-
 (defun invoke-slime-debugger (condition)
   "Sends a message to Emacs declaring that the debugger has been entered,
 then waits to handle further requests from Emacs. Eventually returns
@@ -2373,9 +2332,7 @@ and no continue restart available.")))))
 (defslimefun sdlb-print-condition ()
   (princ-to-string *swank-debugger-condition*))
 
-
 ;;;; Compilation Commands.
-
 (defstruct (compilation-result (:type list))
   (type :compilation-result)
   notes
@@ -2531,16 +2488,12 @@ Record compiler notes signalled as `compiler-condition's."
               (or (not loadp)
                   (load (compile-file-pathname pathname)))))))))
 
-
 ;;;; Loading
-
 (defslimefun load-file (filename)
   (with-buffer-syntax ()
     (to-string (load (filename-to-pathname filename)))))
 
-
 ;;;;; swank-require
-
 (defslimefun swank-require (modules &optional filename)
   "Load the module MODULE."
   (dolist (module (ensure-list modules))
@@ -2583,9 +2536,7 @@ the filename of the module (or nil if the file doesn't exist).")
     (some (lambda (dir) (some #'probe-file (module-candidates name dir)))
           *load-path*)))
 
-
 ;;;; Macroexpansion
-
 (defvar *macroexpand-printer-bindings*
   '((*print-circle* . nil)
     (*print-pretty* . t)
@@ -2657,9 +2608,7 @@ the filename of the module (or nil if the file doesn't exist).")
                              (swank-mop:method-generic-function definition))
                          definition))))))
 
-
 ;;;; Simple completion
-
 (defslimefun simple-completions (prefix package)
   "Return a list of completions for the string PREFIX."
   (let ((strings (all-completions prefix package)))
@@ -2717,18 +2666,14 @@ Returns a list of completions with package qualifiers if needed."
   (mapcar (lambda (string) (untokenize-symbol package-name internal-p string))
           (sort strings #'string<)))
 
-
 ;;;; Simple arglist display
-
 (defslimefun operator-arglist (name package)
   (ignore-errors
     (let ((args (arglist (parse-symbol name (guess-buffer-package package)))))
       (cond ((eq args :not-available) nil)
 	    (t (princ-to-string (cons name args)))))))
 
-
 ;;;; Documentation
-
 (defslimefun apropos-list-for-emacs  (name &optional external-only 
                                            case-sensitive package)
   "Make an apropos search for Emacs.
@@ -2851,9 +2796,7 @@ that symbols accessible in the current package go first."
                         fdoc))))
           (format nil "No such symbol, ~a." symbol-name)))))
 
-
 ;;;; Package Commands
-
 (defslimefun list-all-package-names (&optional nicknames)
   "Return a list of all package names.
 Include the nicknames if NICKNAMES is true."
@@ -2862,9 +2805,7 @@ Include the nicknames if NICKNAMES is true."
               (mapcan #'package-names (list-all-packages))
               (mapcar #'package-name  (list-all-packages)))))
 
-
 ;;;; Tracing
-
 ;; Use eval for the sake of portability... 
 (defun tracedp (fspec)
   (member fspec (eval '(trace))))
@@ -2899,9 +2840,7 @@ If non-nil, called with two arguments SPEC and TRACED-P." )
 (defslimefun untrace-all ()
   (untrace))
 
-
 ;;;; Undefing
-
 (defslimefun undefine-function (fname-string)
   (let ((fname (from-string fname-string)))
     (format nil "~S" (fmakunbound fname))))
@@ -2923,9 +2862,7 @@ If non-nil, called with two arguments SPEC and TRACED-P." )
     (delete-package pkg)
     nil))
 
-
 ;;;; Profiling
-
 (defun profiledp (fspec)
   (member fspec (profiled-functions)))
 
@@ -2963,9 +2900,7 @@ If non-nil, called with two arguments SPEC and TRACED-P." )
     (check-type methodsp boolean)
     (profile-package pkg callersp methodsp)))
 
-
 ;;;; Source Locations
-
 (defslimefun find-definition-for-thing (thing)
   (find-source-location thing))
 
@@ -3061,9 +2996,7 @@ DSPEC is a string and LOCATION a source location. NAME is a string."
   (destructuring-bind (name loc) xref
     (list (to-string name) loc)))
 
-
 ;;;;; Lazy lists
-
 (defstruct (lcons (:constructor %lcons (car %cdr))
                   (:predicate lcons?))
   car
@@ -3107,9 +3040,7 @@ DSPEC is a string and LOCATION a source location. NAME is a string."
 (defun iline (label value)
   `(:line ,label ,value))
 
-
 ;;;; Inspecting
-
 (defvar *inspector-verbose* nil)
 
 (defvar *inspector-printer-bindings*
@@ -3569,9 +3500,8 @@ output of CL:DESCRIBE."
       "Don't know how to inspect the object, dumping output of CL:DESCRIBE:"
       (:newline) (:newline)
       ,(with-output-to-string (desc) (describe object desc)))))
-
-;;;; Thread listing
 
+;;;; Thread listing
 (defvar *thread-list* ()
   "List of threads displayed in Emacs.  We don't care a about
 synchronization issues (yet).  There can only be one thread listing at
@@ -3629,9 +3559,8 @@ The server port is written to PORT-FILE-NAME."
   (interrupt-thread (nth-thread index)
                     (lambda ()
                       (start-server port-file-name :style nil))))
-
-;;;; Class browser
 
+;;;; Class browser
 (defun mop-helper (class-name fn)
   (let ((class (find-class class-name nil)))
     (if class
@@ -3651,14 +3580,11 @@ The server port is written to PORT-FILE-NAME."
       (:superclasses 
        (mop-helper symbol #'swank-mop:class-direct-superclasses)))))
 
-
 ;;;; Automatically synchronized state
-;;;
+
 ;;; Here we add hooks to push updates of relevant information to
 ;;; Emacs.
-
 ;;;;; *FEATURES*
-
 (defun sync-features-to-emacs ()
   "Update Emacs if any relevant Lisp state has changed."
   ;; FIXME: *slime-features* should be connection-local
@@ -3673,17 +3599,15 @@ The server port is written to PORT-FILE-NAME."
 
 (add-hook *pre-reply-hook* 'sync-features-to-emacs)
 
-
 ;;;;; Indentation of macros
-;;;
+
 ;;; This code decides how macros should be indented (based on their
 ;;; arglists) and tells Emacs. A per-connection cache is used to avoid
 ;;; sending redundant information to Emacs -- we just say what's
 ;;; changed since last time.
-;;;
+
 ;;; The strategy is to scan all symbols, pick out the macros, and look
 ;;; for &body-arguments.
-
 (defvar *configure-emacs-indentation* t
   "When true, automatically send indentation information to Emacs
 after each command.")
@@ -3864,9 +3788,7 @@ Collisions are caused because package information is ignored."
   "Create a stream that sends output to a specific TARGET in Emacs."
   (make-output-stream (make-output-function-for-target connection target)))
 
-
 ;;;; Testing 
-
 (defslimefun io-speed-test (&optional (n 1000) (m 1))
   (let* ((s *standard-output*)
          (*trace-output* (make-broadcast-stream s *log-output*)))
@@ -3894,12 +3816,10 @@ Collisions are caused because package information is ignored."
       (force-output stream)
       (background-message "flow-control-test: ~d" i))))
 
-
 (defun before-init (version load-path)
   (pushnew :swank *features*)
   (setq *swank-wire-protocol-version* version)
   (setq *load-path* load-path))
-
 
 (defun init ()
   (run-hook *after-init-hook*))

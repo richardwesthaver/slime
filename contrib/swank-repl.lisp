@@ -294,31 +294,29 @@ LISTENER-EVAL directly, so that spacial variables *, etc are set."
         (swank:make-output-stream-for-target *emacs-connection* target))
   nil)
 
-
-
 ;;;; IO to Emacs
-;;;
-;;; This code handles redirection of the standard I/O streams
-;;; (`*standard-output*', etc) into Emacs. The `connection' structure
-;;; contains the appropriate streams, so all we have to do is make the
-;;; right bindings.
+
+;; This code handles redirection of the standard I/O streams
+;; (`*standard-output*', etc) into Emacs. The `connection' structure
+;; contains the appropriate streams, so all we have to do is make the
+;; right bindings.
 
 ;;;;; Global I/O redirection framework
-;;;
-;;; Optionally, the top-level global bindings of the standard streams
-;;; can be assigned to be redirected to Emacs. When Emacs connects we
-;;; redirect the streams into the connection, and they keep going into
-;;; that connection even if more are established. If the connection
-;;; handling the streams closes then another is chosen, or if there
-;;; are no connections then we revert to the original (real) streams.
-;;;
-;;; It is slightly tricky to assign the global values of standard
-;;; streams because they are often shadowed by dynamic bindings. We
-;;; solve this problem by introducing an extra indirection via synonym
-;;; streams, so that *STANDARD-INPUT* is a synonym stream to
-;;; *CURRENT-STANDARD-INPUT*, etc. We never shadow the "current"
-;;; variables, so they can always be assigned to affect a global
-;;; change.
+
+;; Optionally, the top-level global bindings of the standard streams
+;; can be assigned to be redirected to Emacs. When Emacs connects we
+;; redirect the streams into the connection, and they keep going into
+;; that connection even if more are established. If the connection
+;; handling the streams closes then another is chosen, or if there
+;; are no connections then we revert to the original (real) streams.
+
+;; It is slightly tricky to assign the global values of standard
+;; streams because they are often shadowed by dynamic bindings. We
+;; solve this problem by introducing an extra indirection via synonym
+;; streams, so that *STANDARD-INPUT* is a synonym stream to
+;; *CURRENT-STANDARD-INPUT*, etc. We never shadow the "current"
+;; variables, so they can always be assigned to affect a global
+;; change.
 
 ;;;;; Global redirection setup
 

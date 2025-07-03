@@ -1,0 +1,10 @@
+.*[.](x86f|fasl|abcl|dfsl|lx64fsl|elc)$
+.*[~]$
+[#].*[#]
+[.][#].*
+[.]DS[_]Store
+/doc/.*[.](html|info|pdf|ps|dvi|aux|cp|cps|fn|fns|ky|kys|log|pg|toc|tp|vr|op|ops|pgs|vrs|tgz)$
+/dist/.*$
+# ELPA-generated files
+/slime-pkg.el
+# /slime-autoloads.el

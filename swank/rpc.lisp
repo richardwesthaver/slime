@@ -10,9 +10,7 @@
 
 (in-package swank/rpc)
 
-
 ;;;;; Input
-
 (define-condition swank-reader-error (reader-error)
   ((packet :type string :initarg :packet 
            :reader swank-reader-error.packet)
@@ -94,9 +92,7 @@
            (read-preserving-whitespace))
           (t (error "Invalid character ~:c" c)))))))
 
-
 ;;;;; Output
-
 (defun write-message (message package stream)
   (let* ((string (prin1-to-string-for-emacs message package))
          (octets (handler-case (swank/backend:string-to-utf8 string)
@@ -144,9 +140,7 @@
           (*read-default-float-format* 'double-float))
       (prin1-to-string (switch-to-double-floats object)))))
 
-
 #| TEST/DEMO:
-
 (defparameter *transport*
   (with-output-to-string (out)
     (write-message '(:message (hello "world")) *package* out)

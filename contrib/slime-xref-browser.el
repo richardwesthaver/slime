@@ -1,3 +1,10 @@
+;;; slime-xref-browser.el --- Xref browsing with tree-widget  -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;; 
+
+;;; Code:
 (eval-and-compile
   (require 'slime))
 
@@ -6,9 +13,7 @@
   (:authors "Rui Patrocínio <rui.patrocinio@netvisao.pt>")
   (:license "GPL"))
 
-
 ;;;; classes browser
-
 (defun slime-expand-class-node (widget)
   (or (widget-get widget :args)
       (let ((name (widget-get widget :tag)))
@@ -49,9 +54,7 @@
   (use-local-map slime-browser-map)
   (widget-setup))
 
-
 ;;;; Xref browser
-
 (defun slime-fetch-browsable-xrefs (type name)
   "Return a list ((LABEL DSPEC)).
 LABEL is just a string for display purposes. 
@@ -97,3 +100,4 @@ DSPEC can be used to expand the node."
                     :expander 'slime-expand-xrefs :has-echildren t))))
 
 (provide 'slime-xref-browser)
+;;; slime-xref-browser.el ends here

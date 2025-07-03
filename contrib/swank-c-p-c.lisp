@@ -7,9 +7,6 @@
 ;;         and others
 ;;
 ;; License: Public Domain
-;;
-
-
 (in-package :swank)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -218,9 +215,7 @@ contains lower or upper case characters."
   (values (some #'lower-case-p string)
           (some #'upper-case-p string)))
 
-
 ;;;;; Compound-prefix matching
-
 (defun make-compound-prefix-matcher (delimiter &key (test #'char=))
   "Returns a matching function that takes a `prefix' and a
 `target' string and which returns T if `prefix' is a
@@ -247,9 +242,7 @@ DELIMITER may be a character, or a list of characters."
 			      (funcall test ch (aref target tpos)))))
 	    do (incf tpos)))))
 
-
 ;;;;; Extending the input string by completion
-
 (defun longest-compound-prefix (completions &optional (delimiter #\-))
   "Return the longest compound _prefix_ for all COMPLETIONS."
   (flet ((tokenizer (string) (tokenize-completion string delimiter)))
@@ -286,9 +279,7 @@ For example:
         (t (cons (mapcar #'car lists)
                  (transpose-lists (mapcar #'cdr lists))))))
 
-
 ;;;; Completion for character names
-
 (defslimefun completions-for-character (prefix)
   (let* ((matcher (make-compound-prefix-matcher #\_ :test #'char-equal))
          (completion-set (character-completion-set prefix matcher))

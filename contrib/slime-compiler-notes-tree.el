@@ -97,9 +97,7 @@ grouped by severity.
           (t
            (slime-show-source-location (slime-note.location note) t)))))
 
-
 ;;;;;; Tree Widget
-
 (cl-defstruct (slime-tree (:conc-name slime-tree.))
   item
   (print-fn #'slime-tree-default-printer :type function)

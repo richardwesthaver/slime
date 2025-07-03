@@ -228,9 +228,7 @@
   (declare (ignore position))
   nil)
 
-
 ;;;
-
 (defimplementation make-auto-flush-thread (stream)
   (if (typep stream 'slime-output-stream)
       (setf (stream-data-flush-thread (data stream))

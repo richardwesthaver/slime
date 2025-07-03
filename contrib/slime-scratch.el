@@ -11,9 +11,7 @@
    (def-slime-selector-method ?s "*slime-scratch* buffer."
      (slime-scratch-buffer))))
 
-
 ;;; Code
-
 (defvar slime-scratch-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map lisp-mode-map)

@@ -5,9 +5,6 @@
 ;;          and others
 ;;
 ;; License: Public Domain
-;;
-
-
 (in-package :swank)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

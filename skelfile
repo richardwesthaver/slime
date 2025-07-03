@@ -1,0 +1,9 @@
+;;; slime @ 2025-06-27.22:30:53 -*- mode:skel; -*-
+:name "slime"
+:author "Eric Marsden"
+:description "The Superior Lisp Interaction Mode for Emacs"
+:license nil
+:version "1.0.0"
+:vc (:hg "https://vc.compiler.company/ext/slime"
+     (upstream (:git "https://github.com/slime/slime"))
+     (gh (:git "ssh://git@github.com/richardwesthaver/slime")))

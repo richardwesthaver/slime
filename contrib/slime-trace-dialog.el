@@ -21,9 +21,7 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
   (:on-unload (remove-hook 'slime-mode-hook 'slime-trace-dialog-enable)
               (remove-hook 'slime-repl-mode-hook 'slime-trace-dialog-enable)))
 
-
 ;;;; Variables
-;;;
 (defvar slime-trace-dialog-flash t
   "Non-nil means flash the updated region of the SLIME Trace Dialog. ")
 
@@ -35,7 +33,6 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
 
 (defvar slime-trace-dialog--collapse-chars (cons "-" "+"))
 
-
 ;;;; Local trace entry model
 (defvar slime-trace-dialog--traces nil)
 
@@ -57,9 +54,7 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
 (defun slime-trace-dialog--find-trace (id)
   (gethash id slime-trace-dialog--traces))
 
-
 ;;;; Modes and mode maps
-;;;
 (defvar slime-trace-dialog-mode-map
   (let ((map (make-sparse-keymap))
         (remaps '((slime-inspector-operate-on-point . nil)
@@ -150,9 +145,7 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
   (unless (derived-mode-p 'slime-trace-dialog-mode)
     (error "Not a SLIME Trace Dialog buffer")))
 
-
 ;;;; Helper functions
-;;;
 (defun slime-trace-dialog--call-refreshing (buffer
                                             overlay
                                             dont-erase
@@ -363,9 +356,7 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
     (delete-char 1)
     (insert char)))
 
-
 ;;;; Handlers for the *trace-dialog* and *trace-detail* buffers
-;;;
 (defun slime-trace-dialog--open-specs (traced-specs)
   (cl-labels ((make-report-spec-fn
                (&optional form)
@@ -469,9 +460,7 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
                 (cl-loop for (i spec) in backtrace
                          concat (format "   %s: %s\n" i spec)))))))
 
-
 ;;;; Rendering traces
-;;;
 (defun slime-trace-dialog--draw-tree-lines (start offset direction)
   (save-excursion
     (let ((inhibit-point-motion-hooks t))
@@ -711,9 +700,7 @@ inspecting details of traced functions. Invoke this dialog with C-c T."
                                     results
                                     recurse))))))))
 
-
 ;;;; Interactive functions
-;;;
 (defun slime-trace-dialog-fetch-specs ()
   "Refresh just list of traced specs."
   (interactive)

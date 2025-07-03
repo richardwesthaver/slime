@@ -98,7 +98,6 @@ current repl's (as per slime-output-buffer) window."
   :type 'symbol
   :group 'slime-repl)
 
-
 ;; dummy defvar for compiler
 (defvar slime-repl-read-mode)
 
@@ -107,9 +106,7 @@ current repl's (as per slime-output-buffer) window."
   (with-current-buffer (slime-output-buffer)
     slime-repl-read-mode))
 
-
 ;;;; Stream output
-
 (slime-def-connection-var slime-connection-output-buffer nil
   "The buffer for the REPL.  May be nil or a dead buffer.")
 
@@ -292,7 +289,6 @@ the buffer should appear."
   (pop-to-buffer (slime-output-buffer))
   (goto-char (point-max)))
 
-
 ;;;; REPL
 ;;
 ;; The REPL uses some markers to separate input from output.  The
@@ -896,9 +892,7 @@ used with a prefix argument (C-u), doesn't switch back afterwards."
         (when (cl-plusp previouse-point)
           (goto-char (+ previouse-point slime-repl-input-start-mark)))))))
 
-
 ;;;;; History
-
 (defcustom slime-repl-wrap-history nil
   "*T to wrap history around when the end is reached."
   :type 'boolean
@@ -1162,9 +1156,7 @@ The handler will use qeuery to ask the use if the error should be ingored."
          nil
        (signal (car err) (cdr err))))))
 
-
 ;;;;; REPL Read Mode
-
 (defvar slime-repl-read-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-m" 'slime-repl-return)
@@ -1215,9 +1207,7 @@ The handler will use qeuery to ask the use if the error should be ingored."
     (slime-repl-read-mode -1)
     (message "Read aborted")))
 
-
 ;;;;; REPL handlers
-
 (cl-defstruct (slime-repl-shortcut (:conc-name slime-repl-shortcut.))
   symbol names handler one-liner)
 

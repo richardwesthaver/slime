@@ -34,12 +34,9 @@
 	 (null (remove 'tty (mapcar #'device-type (console-device-list)))))
 	(t (not (window-system)))))
 
-
 ;;;; Typeout frame
-
 ;; When a "typeout frame" exists it is used to display certain
 ;; messages instead of the echo area or pop-up windows.
-
 (defvar slime-typeout-window nil
   "The current typeout window.")
 

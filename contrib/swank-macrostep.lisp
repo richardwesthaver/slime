@@ -4,7 +4,6 @@
 ;;          Jon Oddie <j.j.oddie@gmail.com>
 ;;
 ;; License: Public Domain
-
 (defpackage swank-macrostep
   (:use cl swank)
   (:import-from swank
@@ -93,9 +92,7 @@
     (t
      nil)))
 
-
 ;;;; Hacks to support macro-expansion within local context
-
 (defparameter *macrostep-tag* (gensym))
 
 (defparameter *macrostep-placeholder* '*macrostep-placeholder*)
@@ -142,9 +139,7 @@
             substituted-form
             (error 'expansion-in-context-failed))))))
 
-
 ;;;; Tracking Pretty Printer
-
 (defun marker-char-p (char)
   (<= #xe000 (char-code char) #xe8ff))
 

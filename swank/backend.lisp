@@ -19,9 +19,7 @@
 
 (in-package swank/backend)
 
-
 ;;;; Metacode
-
 (defparameter *debug-swank-backend* nil
   "If this is true, backends should not catch errors but enter the
 debugger where appropriate. Also, they should not perform backtrace
@@ -130,9 +128,7 @@ This will be used like so:
   (defpackage foo
     (:import-from #.(gray-package-name) . #.*gray-stream-symbols*)")
 
-
 ;;;; Utilities
-
 (defmacro with-struct ((conc-name &rest names) obj &body body)
   "Like with-slots but works only for structs."
   (check-type conc-name symbol)
@@ -175,9 +171,7 @@ form suitable for testing with #+."
            (find-symbol (string name) package))
       (find-symbol (string alt-name) alt-package)))
 
-
 ;;;; UFT8
-
 (deftype octet () '(unsigned-byte 8))
 (deftype octets () '(simple-array octet (*)))
 
@@ -342,9 +336,7 @@ form suitable for testing with #+."
   "Convert the (simple-array (unsigned-byte 8)) OCTETS to a string."
   (default-utf8-to-string octets))
 
-
 ;;;; TCP server
-
 (definterface create-socket (host port &key backlog)
   "Create a listening TCP socket on interface HOST and port PORT.
 BACKLOG queue length for incoming connections.")
@@ -400,9 +392,7 @@ This is intended for setting up extra context, e.g. to discover
 that the calling thread is the one that interacts with Emacs."
    nil)
 
-
 ;;;; Unix signals
-
 (defconstant +sigint+ 2)
 
 (definterface getpid ()
@@ -456,9 +446,7 @@ This is thin wrapper around exec(3).")
   "Return a list of strings as passed by the OS."
   nil)
 
-
 ;; pathnames are sooo useless
-
 (definterface filename-to-pathname (filename)
   "Return a pathname for FILENAME.
 A filename in Emacs may for example contain asterisks which should not
@@ -479,14 +467,11 @@ This is used to resolve filenames without directory component."
   (setf *default-pathname-defaults* (truename (merge-pathnames directory)))
   (default-directory))
 
-
 (definterface call-with-syntax-hooks (fn)
   "Call FN with hooks to handle special syntax."
   (funcall fn))
 
-
 ;;;; Packages
-
 (definterface package-local-nicknames (package)
   "Returns an alist of (local-nickname . actual-package) describing the
 nicknames local to the designated package."
@@ -499,9 +484,7 @@ Return NIL if local nicknames are not implemented or if there is no
 such package."
   (cdr (assoc name (package-local-nicknames base-package) :test #'string-equal)))
 
-
 ;;;; Compilation
-
 (definterface call-with-compilation-hooks (func)
   "Call FUNC with hooks to record compiler conditions.")
 
@@ -627,9 +610,7 @@ Return nil if the file contains no special markers."
                               str :start p)))
         (find-external-format (subseq str p end))))))
 
-
 ;;;; Streams
-
 (definterface make-output-stream (write-string)
   "Return a new character output stream.
 The stream calls WRITE-STRING when output is ready.")
@@ -659,9 +640,7 @@ The stream calls READ-STRING when input is needed.")
   "FINISH-OUTPUT or more"
   (finish-output stream))
 
-
 ;;;; Documentation
-
 (definterface arglist (name)
    "Return the lambda list for the symbol NAME. NAME can also be
 a lisp function object, on lisps which support this.
@@ -846,9 +825,7 @@ TYPE can be any value returned by DESCRIBE-SYMBOL-FOR-EMACS.
 
 Return a documentation string, or NIL if none is available.")
 
-
 ;;;; Debugging
-
 (definterface install-debugger-globally (function)
   "Install FUNCTION as the debugger for all threads/processes. This
 usually involves setting *DEBUGGER-HOOK* and, if the implementation
@@ -1021,9 +998,7 @@ false otherwise. "
   "Stop single-stepping temporarily, but resume it once the current function
 returns.")
 
-
 ;;;; Definition finding
-
 (defstruct (location (:type list)
                       (:constructor make-location
                           (buffer position &optional hints)))
@@ -1090,9 +1065,7 @@ unmodified text to improve the precision of source locations."
   nil)
 
 
-
 ;;;; XREF
-
 (definterface who-calls (function-name)
   "Return the call sites of FUNCTION-NAME (a symbol).
 The results is a list ((DSPEC LOCATION) ...)."
@@ -1150,11 +1123,8 @@ The return value is as for WHO-CALLS.")
   "List the functions called by FUNCTION-NAME.
 See LIST-CALLERS for a description of the return value.")
 
-
 ;;;; Profiling
-
-;;; The following functions define a minimal profiling interface.
-
+;; The following functions define a minimal profiling interface.
 (definterface profile (fname)
   "Marks symbol FNAME for profiling.")
 
@@ -1187,9 +1157,7 @@ When called with arguments :METHODS T, profile all methods of all
 generic functions having names in the given package.  Generic functions
 themselves, that is, their dispatch functions, are left alone.")
 
-
 ;;;; Trace
-
 (definterface toggle-trace (spec)
   "Toggle tracing of the function(s) given with SPEC.
 SPEC can be:
@@ -1200,9 +1168,7 @@ SPEC can be:
  (:labels TOPLEVEL LOCAL)
  (:flet TOPLEVEL LOCAL) ")
 
-
 ;;;; Inspector
-
 (defgeneric emacs-inspect (object)
   (:documentation
    "Explain to Emacs how to inspect OBJECT.
@@ -1247,12 +1213,10 @@ If NEWLINE is non-NIL a `(:newline)' is added to the result."
   (declare (ignore object))
   "N/A")
 
-
 ;;;; Multithreading
-;;;
+
 ;;; The default implementations are sufficient for non-multiprocessing
 ;;; implementations.
-
 (definterface initialize-multiprocessing (continuation)
    "Initialize multiprocessing, if necessary and then invoke CONTINUATION.
 
@@ -1356,7 +1320,6 @@ created thread.  This function sets the form which is used to produce
 the initial value."
   (set var (eval form)))
 
-
 ;;;; Interrupt handling 
 
 ;; Usually we'd like to enter the debugger when an interrupt happens.
@@ -1365,14 +1328,14 @@ the initial value."
 ;; inconsistent/locked state. Obviously, if send&receive don't work we
 ;; can't communicate and the debugger will not work.  To solve that
 ;; problem, we try to handle interrupts only at certain safe-points.
-;;
+
 ;; Whenever an interrupt happens we call the function
 ;; INVOKE-OR-QUEUE-INTERRUPT.  Usually this simply invokes the
 ;; debugger, but if interrupts are disabled the interrupt is put in a
 ;; queue for later processing.  At safe-points, we call
 ;; CHECK-SLIME-INTERRUPTS which looks at the queue and invokes the
 ;; debugger if needed.
-;;
+
 ;; The queue for interrupts is stored in a thread local variable.
 ;; WITH-CONNECTION sets it up.  WITH-SLIME-INTERRUPTS allows
 ;; interrupts, i.e. the debugger is entered immediately.  When we call
@@ -1437,12 +1400,9 @@ Return :interrupt if an interrupt occurs while waiting."
      (error "~s not implemented. Check if ~s = ~s is supported by the implementation."
             'wait-for-input 'swank:*communication-style* swank:*communication-style*))))
 
-
 ;;;;  Locks
-
 ;; Please use locks only in swank-gray.lisp.  Locks are too low-level
 ;; for our taste.
-
 (definterface make-lock (&key name)
    "Make a lock for thread synchronization.
 Only one thread may hold the lock (via CALL-WITH-LOCK-HELD) at a time
@@ -1461,9 +1421,7 @@ but that thread may hold it more than once."
                         (lambda ()
                           ,@body)))
 
-
 ;;;; Weak datastructures
-
 (definterface make-weak-key-hash-table (&rest args)
   "Like MAKE-HASH-TABLE, but weak w.r.t. the keys."
   (apply #'make-hash-table args))
@@ -1477,9 +1435,7 @@ but that thread may hold it more than once."
   (declare (ignore hashtable))
   nil)
 
-
 ;;;; Floating point
-
 (definterface float-nan-p (float)
   "Return true if FLOAT is a NaN value (Not a Number)."
   ;; When the float type implements IEEE-754 floats, two NaN values
@@ -1498,9 +1454,7 @@ but that thread may hold it more than once."
           float
           most-positive-long-float)))
 
-
 ;;;; Character names
-
 (definterface character-completion-set (prefix matchp)
   "Return a list of names of characters that match PREFIX."
   ;; Handle the standard and semi-standard characters.
@@ -1560,9 +1514,7 @@ COMPLETION-FUNCTION, if non-nil, should be called after saving the image.")
   ;; Can't hang on to an fd-stream from a previous session.
   (setf *log-output* nil))
 
-
 ;;;; Wrapping
-
 (definterface wrap (spec indicator &key before after replace)
   "Intercept future calls to SPEC and surround them in callbacks.
 

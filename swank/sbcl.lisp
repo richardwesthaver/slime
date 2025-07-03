@@ -145,7 +145,6 @@
                            ((nil :none) :none)
                            ((:line) :line))))
 
-
 ;; The SIGIO stuff should probably be removed as it's unlikey that
 ;; anybody uses it.
 #-(or win32 haiku)
@@ -189,7 +188,6 @@
       (sb-sys:invalidate-descriptor fd))
     (close socket)))
 
-
 (defimplementation add-fd-handler (socket fun)
   (let ((fd (socket-fd socket))
         (handler nil))
@@ -354,7 +352,6 @@
             (return (sb-bsd-sockets:socket-accept socket))
           (sb-bsd-sockets:interrupted-error ()))))
 
-
 (defun sbcl-package-p (package)
   (let ((name (package-name package)))
     (eql (mismatch "SB-" name) 3)))
@@ -1070,15 +1067,12 @@ Return a list of the form (NAME LOCATION)."
        form))
     (values macro-forms compiler-macro-forms)))
 
-
 ;;; Debugging
-
-;;; Notice that SB-EXT:*INVOKE-DEBUGGER-HOOK* is slightly stronger
-;;; than just a hook into BREAK. In particular, it'll make
-;;; (LET ((*DEBUGGER-HOOK* NIL)) ..error..) drop into SLDB rather
-;;; than the native debugger. That should probably be considered a
-;;; feature.
-
+;; Notice that SB-EXT:*INVOKE-DEBUGGER-HOOK* is slightly stronger
+;; than just a hook into BREAK. In particular, it'll make
+;; (LET ((*DEBUGGER-HOOK* NIL)) ..error..) drop into SLDB rather
+;; than the native debugger. That should probably be considered a
+;; feature.
 (defun make-invoke-debugger-hook (hook)
   (when hook
     #'(sb-int:named-lambda swank-invoke-debugger-hook
@@ -1481,14 +1475,11 @@ stack."
   (sb-di:debug-fun-fun (sb-di:frame-debug-fun (nth-frame frame-number))))
 
 ;;;;; reference-conditions
-
 (defimplementation print-condition (condition stream)
   (let ((sb-int:*print-condition-references* nil))
     (princ condition stream)))
 
-
 ;;;; Profiling
-
 (defimplementation profile (fname)
   (when fname (eval `(sb-profile:profile ,fname))))
 
@@ -1513,7 +1504,6 @@ stack."
   (declare (ignore callers methods))
   (eval `(sb-profile:profile ,(package-name (find-package package)))))
 
-
 ;;;; Inspector
 (defmethod emacs-inspect ((o t))
   (cond ((sb-di::indirect-value-cell-p o)
@@ -1584,12 +1574,9 @@ stack."
              (call-next-method)
              (label-value-line*
               (:pretty-arglist (sb-pcl::generic-function-pretty-arglist o))
-              (:initial-methods (sb-pcl::generic-function-initial-methods o))
-              )))
+              (:initial-methods (sb-pcl::generic-function-initial-methods o)))))
 
-
 ;;;; Multiprocessing
-
 #+(and sb-thread
        #.(swank/backend:with-symbol "THREAD-NAME" "SB-THREAD"))
 (progn
@@ -1811,14 +1798,12 @@ stack."
     (sb-ext:quit)))
 
 
-
 ;;Trace implementations
 ;;In SBCL, we have:
 ;; (trace <name>)
 ;; (trace :methods '<name>) ;to trace all methods of the gf <name>
 ;; (trace (method <name> <qualifier>? (<specializer>+)))
 ;; <name> can be a normal name or a (setf name)
-
 (defun toggle-trace-aux (fspec &rest args)
   (cond ((member fspec (eval '(trace)) :test #'equal)
          (eval `(untrace ,fspec))
@@ -1973,9 +1958,7 @@ stack."
 
 (pushnew 'deinit-log-output sb-ext:*save-hooks*)
 
-
 ;;;; wrap interface implementation
-
 (defun sbcl-version>= (&rest subversions)
   #+#.(swank/backend:with-symbol 'assert-version->= 'sb-ext)
   (values (ignore-errors (apply #'sb-ext:assert-version->= subversions) t))

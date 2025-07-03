@@ -44,7 +44,6 @@ If false, move point to the end of the inserted text."
   :group 'slime-mode
   :type 'boolean)
 
-
 ;; FIXME: this is the old code to display completions.  Remove it once
 ;; `slime-complete-symbol*' and `slime-fuzzy-complete-symbol' can be
 ;; used together with `completion-at-point'.
@@ -164,7 +163,6 @@ terminates a current completion."
       (comint-replace-by-expanded-filename)
       t)))
 
-
 (defun slime-complete-symbol* ()
   "Expand abbreviations and complete the symbol at point."
   ;; NB: It is only the name part of the symbol that we actually want
@@ -277,9 +275,7 @@ current buffer."
         (list (mapcar #'append-char-syntax (car result))
               (append-char-syntax (cadr result)))))))
 
-
 ;;; Complete form
-
 (defun slime-complete-form ()
   "Complete the form at point.  
 This is a superset of the functionality of `slime-insert-arglist'."

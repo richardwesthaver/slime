@@ -23,7 +23,6 @@
 ;;     Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 ;;     MA 02111-1307, USA.
 
-
 ;;;; Tests
 (require 'slime)
 (require 'ert)
@@ -185,7 +184,6 @@ conditions (assertions)."
                   (string `(concat "Check failed: " ,check))
                   (symbol `(concat "Check failed: " ,(symbol-name check)))))))
 
-
 ;;;;; Test case definitions
 (defun slime-check-top-level () ;(&optional _test-name)
   (accept-process-output nil 0.001)
@@ -1368,9 +1366,7 @@ Reconnect afterwards."
 	(setq slime-buffer-connection buffer-connection)
 	(equal expected (slime-modeline-string))))))
 
-
 ;;;; SLIME-loading tests that launch separate Emacsen
-;;;;
 (cl-defun slime-test-recipe-test-for (&key preflight
                                            takeoff
                                            landing)

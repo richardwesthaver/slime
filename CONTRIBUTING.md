@@ -37,7 +37,6 @@ test suite so it makes a good sanity check for fundamental changes
 Running the test suite, adding new cases, and increasing the number of
 cases that backends support are all very good for karma.
 
-
 ## Source code layout
 
 We use a special source file layout to take advantage of some fancy
@@ -99,7 +98,6 @@ your attention on one part of the program as if it were its own file.
 Emacs you can press `C-x n p` to narrow to this page, and then later
 `C-x n w` to make the whole buffer visible again.)
 
-
 ## Coding style
 
 We like the fact that each function in SLIME will fit on a single
@@ -137,8 +135,6 @@ _Remember that to rewrite a program better is the sincerest form of
 code appreciation. When you can see a way to rewrite a part of SLIME
 better, please do so!_
 
-
-
 ## Pull requests
 
 * Read [how to properly contribute to open source projects on Github][1].

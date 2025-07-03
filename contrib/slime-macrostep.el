@@ -124,6 +124,4 @@
     ((:ok result)
      result)))
 
-
-
 (provide 'slime-macrostep)
